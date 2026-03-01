@@ -17,3 +17,131 @@ model Item {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 }
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum ActorType {
+  USER
+  RESTAURANT
+  DRIVER
+  SYSTEM
+}
+
+model Cart {
+  id           String     @id @default(uuid())
+  userId       String
+  restaurantId String
+  items        CartItem[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([userId, restaurantId])
+}
+
+model CartItem {
+  id           String             @id @default(uuid())
+  cartId       String
+  cart         Cart               @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  dishId       String
+  dishName     String
+  dishImageUrl String?
+  unitPrice    Float
+  quantity     Int
+  modifiers    CartItemModifier[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model CartItemModifier {
+  id         String   @id @default(uuid())
+  cartItemId String
+  cartItem   CartItem @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
+  name       String
+  option     String
+  extraPrice Float
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  orderNumber  String      @unique
+  userId       String
+  restaurantId String
+  driverId     String?
+  status       OrderStatus @default(PENDING)
+
+  subtotal       Float
+  deliveryFee    Float
+  serviceFee     Float
+  discountAmount Float @default(0)
+  totalAmount    Float
+
+  deliveryLine1        String
+  deliveryLine2        String?
+  deliveryCity         String
+  deliveryPostcode     String
+  deliveryCountry      String
+  deliveryLatitude     Float?
+  deliveryLongitude    Float?
+  deliveryInstructions String?
+  deliveryLabel        String?
+
+  restaurantName    String
+  restaurantAddress String
+
+  estimatedDeliveryAt DateTime?
+  actualDeliveryAt    DateTime?
+  promoCode           String?
+
+  cancelledAt        DateTime?
+  cancellationActor  ActorType?
+  cancellationReason String?
+
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id           String            @id @default(uuid())
+  orderId      String
+  order        Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  dishId       String
+  dishName     String
+  dishImageUrl String?
+  dishCategory String?
+  unitPrice    Float
+  quantity     Int
+  lineTotal    Float
+  modifiers    OrderItemModifier[]
+}
+
+model OrderItemModifier {
+  id          String    @id @default(uuid())
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  name        String
+  option      String
+  extraPrice  Float
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  note      String?
+  actorId   String?
+  actorType ActorType?
+  createdAt DateTime    @default(now())
+}

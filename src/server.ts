@@ -4,6 +4,8 @@ import { logger } from './utils/logger';
 import { environment } from './config/environment';
 import { errorHandler } from './middleware/error-handler.middleware';
 import { rateLimiterMiddleware } from './middleware/rate-limiter.middleware';
+import { apiKeyMiddleware } from './middleware/api-key.middleware';
+import { actorContextMiddleware } from './middleware/actor-context.middleware';
 import routes from './routes';
 
 const app = express();
@@ -18,6 +20,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // global rate limiter
 app.use(rateLimiterMiddleware);
+
+// API key authentication
+app.use(apiKeyMiddleware);
+
+// Actor context from trusted gateway headers
+app.use(actorContextMiddleware);
 
 // Routes
 app.use(routes);

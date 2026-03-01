@@ -1,7 +1,7 @@
 {
-  "name": "node-template",
+  "name": "deliveroo-clone-order-service",
   "version": "1.0.0",
-  "description": "Production-ready TypeScript/Express node microservice starter template",
+  "description": "Deliveroo clone order service microservice",
   "main": "dist/server.js",
   "engines": {
     "node": ">=24"
