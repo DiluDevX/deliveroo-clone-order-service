@@ -1,6 +1,6 @@
-# node-template
+# deliveroo-clone-order-service
 
-A production-ready TypeScript/Express microservice starter template with security-first design,
+A Deliveroo clone order service built with TypeScript/Express, featuring security-first design,
 full type safety, and a complete development workflow.
 
 ## Features
