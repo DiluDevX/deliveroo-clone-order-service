@@ -6,7 +6,7 @@ import { errorHandler } from './middleware/error-handler.middleware';
 import { rateLimiterMiddleware } from './middleware/rate-limiter.middleware';
 import { apiKeyMiddleware } from './middleware/api-key.middleware';
 import { actorContextMiddleware } from './middleware/actor-context.middleware';
-import routes from './routes';
+import routes from './routes/index';
 
 const app = express();
 

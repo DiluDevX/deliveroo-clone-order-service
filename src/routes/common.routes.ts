@@ -5,6 +5,6 @@ const router = Router();
 
 router.get('/', healthCheck);
 
-router.all('*', fallback);
+router.all(/.*/, fallback);
 
 export default router;
