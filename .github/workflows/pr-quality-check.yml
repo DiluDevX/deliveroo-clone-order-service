@@ -1,4 +1,4 @@
-name: PR Quality Check
+name: PR — Quality Checks
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   quality-checks:
-    name: ${{ matrix.check.name }}
+    name: Quality / ${{ matrix.check.name }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -28,6 +28,8 @@ jobs:
             command: npm run format:check
           - name: Types
             command: npm run types:check
+          - name: Build
+            command: npm run build:check
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -40,7 +42,11 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm i
+        run: npm ci
+
+      - name: Generate Prisma Client
+        if: matrix.check.name == 'Types' || matrix.check.name == 'Build'
+        run: npm run prisma:generate
 
       - name: Run ${{ matrix.check.name }} check
         run: ${{ matrix.check.command }}
