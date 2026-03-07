@@ -30,6 +30,15 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
 enum ActorType {
   USER
   RESTAURANT
@@ -78,6 +87,10 @@ model Order {
   restaurantId String
   driverId     String?
   status       OrderStatus @default(PENDING)
+
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentId     String?
+  paymentMethod String?
 
   subtotal       Float
   deliveryFee    Float

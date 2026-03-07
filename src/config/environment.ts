@@ -30,6 +30,9 @@ interface Environment {
   serviceName: string;
   mail: MailConfig;
   rateLimit: RateLimitConfig;
+
+  paymentServiceUrl: string;
+  paymentServiceApiKey: string;
 }
 
 function requireEnv(name: string): string {
@@ -127,4 +130,6 @@ export const environment: Environment = {
   mail: loadMailConfig(environment_raw),
   rateLimit: loadRateLimitConfig(environment_raw),
   serviceName: requireEnv('SERVICE_NAME'),
+  paymentServiceUrl: optionalEnv('PAYMENT_SERVICE_URL', 'http://localhost:3001'),
+  paymentServiceApiKey: optionalEnv('PAYMENT_SERVICE_API_KEY', ''),
 };

@@ -1,5 +1,5 @@
 import { Order, OrderStatus, ActorType, Prisma } from '@prisma/client';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { isPrismaErrorWithCode, prisma } from '../config/database';
 import { BadRequestError, InternalServerError, NotFoundError } from '../utils/errors';
 import { PRISMA_CODE } from '../utils/constants';
@@ -41,6 +41,17 @@ export const createOrder = async (
   data: CreateOrderRequestBodyDTO,
   actorId?: string,
   actorType?: ActorType
+): Promise<OrderWithRelations> => {
+  return createOrderWithPayment(data, actorId, actorType, 'cash', undefined, 'SUCCEEDED');
+};
+
+export const createOrderWithPayment = async (
+  data: CreateOrderRequestBodyDTO,
+  actorId?: string,
+  actorType?: ActorType,
+  paymentMethod?: string,
+  paymentId?: string,
+  paymentStatus: 'PENDING' | 'SUCCEEDED' | 'FAILED' = 'PENDING'
 ): Promise<OrderWithRelations> => {
   const {
     userId,
@@ -91,6 +102,9 @@ export const createOrder = async (
           restaurantAddress,
           estimatedDeliveryAt: estimatedDeliveryAt ? new Date(estimatedDeliveryAt) : undefined,
           promoCode,
+          paymentMethod: paymentMethod ?? 'card',
+          paymentId,
+          paymentStatus: paymentStatus,
           items: {
             create: items.map((item) => ({
               dishId: item.dishId,
@@ -154,8 +168,8 @@ export const listOrders = async (
   query: ListOrdersQueryDTO,
   filterUserId?: string
 ): Promise<{ orders: OrderWithRelations[]; total: number }> => {
-  const parsedPage = query.page ? parseInt(query.page, 10) : 1;
-  const parsedLimit = query.limit ? parseInt(query.limit, 10) : 20;
+  const parsedPage = query.page ? Number.parseInt(query.page, 10) : 1;
+  const parsedLimit = query.limit ? Number.parseInt(query.limit, 10) : 20;
   const skip = (parsedPage - 1) * parsedLimit;
 
   let orderBy: Prisma.OrderOrderByWithRelationInput = { createdAt: 'desc' };
@@ -188,15 +202,15 @@ export const listOrdersByRestaurant = async (
   restaurantId: string,
   query: ListOrdersQueryDTO
 ): Promise<{ orders: OrderWithRelations[]; total: number }> => {
-  return listOrders({ ...query, restaurantId }, undefined);
+  return listOrders({ ...query, restaurantId });
 };
 
 export const listOrdersByDriver = async (
   driverId: string,
   query: ListOrdersQueryDTO
 ): Promise<{ orders: OrderWithRelations[]; total: number }> => {
-  const parsedPage = query.page ? parseInt(query.page, 10) : 1;
-  const parsedLimit = query.limit ? parseInt(query.limit, 10) : 20;
+  const parsedPage = query.page ? Number.parseInt(query.page, 10) : 1;
+  const parsedLimit = query.limit ? Number.parseInt(query.limit, 10) : 20;
   const skip = (parsedPage - 1) * parsedLimit;
 
   const where: Prisma.OrderWhereInput = { driverId };

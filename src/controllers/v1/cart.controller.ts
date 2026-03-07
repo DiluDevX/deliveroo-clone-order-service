@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import * as cartService from '../../services/cart.database.service';
 import * as orderService from '../../services/order.database.service';
+import paymentService from '../../services/payment.service';
 import { logger } from '../../utils/logger';
 import { BadRequestError, UnauthorizedError } from '../../utils/errors';
 import { mapCartToResponse, mapOrderToResponse } from '../../utils/mappers';
@@ -167,12 +168,38 @@ export const checkout = async (
       discountAmount,
       promoCode,
       estimatedDeliveryAt,
+      paymentMethod,
     } = req.body;
 
     const actorType = req.actor?.type as ActorType | undefined;
     const actorId = req.actor?.actorId ?? userId;
 
-    const order = await orderService.createOrder(
+    let paymentId: string | undefined;
+    let clientSecret: string | undefined;
+    let paymentStatus: 'PENDING' | 'SUCCEEDED' = 'PENDING';
+
+    if (paymentMethod === 'card') {
+      const subtotal = cart.items.reduce((sum, item) => {
+        const modifiersTotal = item.modifiers.reduce((ms, m) => ms + m.extraPrice, 0);
+        return sum + (item.unitPrice + modifiersTotal) * item.quantity;
+      }, 0);
+      const totalAmount = subtotal + deliveryFee + serviceFee - (discountAmount ?? 0);
+
+      const paymentResult = await paymentService.createPaymentIntent(totalAmount, 'gbp', {
+        userId,
+        restaurantId: cart.restaurantId,
+      });
+
+      if (!paymentResult.success) {
+        throw new BadRequestError(`Payment failed: ${paymentResult.error}`);
+      }
+
+      paymentId = paymentResult.paymentId;
+      clientSecret = paymentResult.clientSecret;
+      paymentStatus = 'SUCCEEDED';
+    }
+
+    const order = await orderService.createOrderWithPayment(
       {
         userId,
         restaurantId: cart.restaurantId,
@@ -198,17 +225,25 @@ export const checkout = async (
         estimatedDeliveryAt,
       },
       actorId,
-      actorType
+      actorType,
+      paymentMethod ?? 'cash',
+      paymentId,
+      paymentStatus
     );
 
     await cartService.clearCart(userId);
 
     logger.info({ userId, orderId: order.id, orderNumber: order.orderNumber }, 'order placed');
 
+    const response = mapOrderToResponse(order) ?? undefined;
+
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: 'Order placed successfully',
-      data: mapOrderToResponse(order) ?? undefined,
+      data: {
+        ...response,
+        paymentClientSecret: clientSecret,
+      } as OrderResponseDTO & { paymentClientSecret?: string },
     });
   } catch (error) {
     logger.error(error, 'checkout error');

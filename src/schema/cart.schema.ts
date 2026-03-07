@@ -45,4 +45,5 @@ export const checkoutRequestBodySchema = z.object({
   discountAmount: z.number().min(0).optional().default(0),
   promoCode: z.string().optional(),
   estimatedDeliveryAt: z.string().datetime().optional(),
+  paymentMethod: z.enum(['card', 'cash']).optional().default('card'),
 });
