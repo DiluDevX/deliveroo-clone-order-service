@@ -42,7 +42,7 @@ export const createOrder = async (
   actorId?: string,
   actorType?: ActorType
 ): Promise<OrderWithRelations> => {
-  return createOrderWithPayment(data, actorId, actorType, 'cash', undefined, 'SUCCEEDED');
+  return createOrderWithPayment(data, actorId, actorType, 'card', undefined, 'SUCCEEDED');
 };
 
 export const createOrderWithPayment = async (
@@ -102,7 +102,7 @@ export const createOrderWithPayment = async (
           restaurantAddress,
           estimatedDeliveryAt: estimatedDeliveryAt ? new Date(estimatedDeliveryAt) : undefined,
           promoCode,
-          paymentMethod: paymentMethod ?? 'card',
+          paymentMethod: paymentMethod,
           paymentId,
           paymentStatus: paymentStatus,
           items: {

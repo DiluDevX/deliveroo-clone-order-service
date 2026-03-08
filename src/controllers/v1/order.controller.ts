@@ -16,7 +16,7 @@ import {
   RestaurantIdParamsDTO,
   UpdateOrderStatusRequestBodyDTO,
 } from '../../dtos/order.dto';
-import { ActorType, OrderStatus } from '@prisma/client';
+import { OrderStatus } from '@prisma/client';
 
 export const listOrders = async (
   req: Request<unknown, PaginatedResponseDTO<OrderResponseDTO>, unknown, ListOrdersQueryDTO>,
@@ -28,8 +28,8 @@ export const listOrders = async (
     if (!userId) throw new UnauthorizedError('X-User-Id header is required');
 
     const query = req.query;
-    const parsedPage = query.page ? parseInt(query.page, 10) : 1;
-    const parsedLimit = query.limit ? parseInt(query.limit, 10) : 20;
+    const parsedPage = query.page ? Number.parseInt(query.page, 10) : 1;
+    const parsedLimit = query.limit ? Number.parseInt(query.limit, 10) : 20;
 
     const { orders, total } = await orderService.listOrders(query, userId);
 
@@ -82,7 +82,7 @@ export const createOrder = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const actorType = req.actor?.type as ActorType | undefined;
+    const actorType = req.actor?.type;
     const actorId = req.actor?.actorId ?? req.actor?.userId;
 
     const order = await orderService.createOrder(req.body, actorId, actorType);
@@ -107,7 +107,7 @@ export const cancelOrder = async (
 ): Promise<void> => {
   try {
     const { orderId } = req.params;
-    const actorType = req.actor?.type as ActorType | undefined;
+    const actorType = req.actor?.type;
     const actorId = req.actor?.actorId ?? req.actor?.userId;
 
     const order = await orderService.cancelOrder(orderId, req.body.reason, actorId, actorType);
@@ -137,7 +137,7 @@ export const updateOrderStatus = async (
   try {
     const { orderId } = req.params;
     const { status, note } = req.body;
-    const actorType = req.actor?.type as ActorType | undefined;
+    const actorType = req.actor?.type;
     const actorId = req.actor?.actorId ?? req.actor?.userId;
 
     const order = await orderService.updateOrderStatus(
@@ -169,7 +169,7 @@ export const assignDriver = async (
   try {
     const { orderId } = req.params;
     const { driverId } = req.body;
-    const actorType = req.actor?.type as ActorType | undefined;
+    const actorType = req.actor?.type;
     const actorId = req.actor?.actorId ?? req.actor?.userId;
 
     const order = await orderService.assignDriver(orderId, driverId, actorId, actorType);
@@ -200,8 +200,8 @@ export const listOrdersByRestaurant = async (
   try {
     const { restaurantId } = req.params;
     const query = req.query;
-    const parsedPage = query.page ? parseInt(query.page, 10) : 1;
-    const parsedLimit = query.limit ? parseInt(query.limit, 10) : 20;
+    const parsedPage = query.page ? Number.parseInt(query.page, 10) : 1;
+    const parsedLimit = query.limit ? Number.parseInt(query.limit, 10) : 20;
 
     const { orders, total } = await orderService.listOrdersByRestaurant(restaurantId, query);
 
@@ -237,8 +237,8 @@ export const listOrdersByDriver = async (
   try {
     const { driverId } = req.params;
     const query = req.query;
-    const parsedPage = query.page ? parseInt(query.page, 10) : 1;
-    const parsedLimit = query.limit ? parseInt(query.limit, 10) : 20;
+    const parsedPage = query.page ? Number.parseInt(query.page, 10) : 1;
+    const parsedLimit = query.limit ? Number.parseInt(query.limit, 10) : 20;
 
     const { orders, total } = await orderService.listOrdersByDriver(driverId, query);
 

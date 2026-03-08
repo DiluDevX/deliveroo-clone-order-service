@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import * as cartService from '../../services/cart.database.service';
 import * as orderService from '../../services/order.database.service';
-import paymentService from '../../services/payment.service';
 import { logger } from '../../utils/logger';
 import { BadRequestError, UnauthorizedError } from '../../utils/errors';
 import { mapCartToResponse, mapOrderToResponse } from '../../utils/mappers';
@@ -16,6 +15,7 @@ import {
 } from '../../dtos/cart.dto';
 import { OrderResponseDTO } from '../../dtos/order.dto';
 import { ActorType } from '@prisma/client';
+import { paymentService } from '../../services/payment.service';
 
 export const getCart = async (
   req: Request<unknown, CommonResponseDTO<CartResponseDTO>>,
@@ -171,7 +171,7 @@ export const checkout = async (
       paymentMethod,
     } = req.body;
 
-    const actorType = req.actor?.type as ActorType | undefined;
+    const actorType = req.actor?.type as ActorType;
     const actorId = req.actor?.actorId ?? userId;
 
     let paymentId: string | undefined;
@@ -185,7 +185,7 @@ export const checkout = async (
       }, 0);
       const totalAmount = subtotal + deliveryFee + serviceFee - (discountAmount ?? 0);
 
-      const paymentResult = await paymentService.createPaymentIntent(totalAmount, 'gbp', {
+      const paymentResult = await paymentService.createPayment(totalAmount, 'usd', {
         userId,
         restaurantId: cart.restaurantId,
       });
@@ -196,7 +196,7 @@ export const checkout = async (
 
       paymentId = paymentResult.paymentId;
       clientSecret = paymentResult.clientSecret;
-      paymentStatus = 'SUCCEEDED';
+      paymentStatus = paymentResult.success ? 'SUCCEEDED' : 'PENDING';
     }
 
     const order = await orderService.createOrderWithPayment(
