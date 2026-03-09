@@ -1,6 +1,30 @@
-# Deliveroo Order Service
+# Deliveroo Clone - Order Service
 
-A production-ready TypeScript/Express Node.js microservice for managing orders in a Deliveroo clone. Built with security-first design, full type safety, and a complete development workflow.
+A production-ready TypeScript/Express Node.js microservice for managing orders in a Deliveroo clone. Part of a larger microservices architecture with a BFF (Backend for Frontend) gateway.
+
+## System Architecture
+
+```
+┌─────────────┐
+│  Frontend   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────────────────────────┐
+│        Main API (BFF Gateway)        │
+│    - Request aggregation             │
+│    - Auth validation                 │
+│    - Route to services                │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Backend Services                         │
+├──────────┬──────────┬──────────┬──────────┬───────────────┤
+│  Order   │  Cart    │ Payment   │  Auth    │ Notification  │
+│ Service  │ Service  │ Service   │ Service  │   Service     │
+└──────────┴──────────┴──────────┴──────────┴───────────────┘
+```
 
 ## Features
 
@@ -94,6 +118,8 @@ deliveroo-clone-order-service/
 │   ├── routes/                     # index.ts + common.routes.ts + v1/<domain>.routes.ts
 │   ├── schema/                     # Zod validation schemas (common + per-domain)
 │   ├── services/                   # <domain>.database.service.ts — all Prisma queries live here
+│   │   └── payment.service.ts      # Payment service integration (HTTP)
+│   ├── types/                      # TypeScript types
 │   ├── utils/                      # constants.ts, errors.ts, logger.ts
 │   └── index.ts                    # Entry point: connect DB, start HTTP, graceful shutdown
 ├── Dockerfile                      # Production Docker image
@@ -101,6 +127,41 @@ deliveroo-clone-order-service/
 ├── package.json
 ├── tsconfig.json
 └── README.md
+```
+
+## Service Communication
+
+The order service communicates with other services:
+
+| Service      | Communication Method | Description                         |
+| ------------ | -------------------- | ----------------------------------- |
+| Payment      | Direct HTTP          | Creates payments, confirms, refunds |
+| Auth         | JWT + API Key        | Token validation                    |
+| Notification | Event-based (future) | Order status updates                |
+
+### Payment Service Integration
+
+The order service makes direct HTTP calls to the payment service:
+
+```typescript
+// src/services/payment.service.ts
+const PAYMENT_SERVICE_URL = environment.paymentServiceUrl;
+
+const response = await fetch(`${PAYMENT_SERVICE_URL}/api/payments/create-intent`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Api-Key': environment.paymentServiceApiKey,
+  },
+  body: JSON.stringify({ amount, currency, metaData }),
+});
+```
+
+Environment variables required:
+
+```bash
+PAYMENT_SERVICE_URL=http://localhost:3001
+PAYMENT_SERVICE_API_KEY=your-payment-service-api-key
 ```
 
 ## API Endpoints
@@ -147,6 +208,18 @@ All routes are prefixed with `/api/v1` and follow a standardized response envelo
 | PATCH  | `/api/v1/orders/:id` | Update an order   | See schema below |
 | DELETE | `/api/v1/orders/:id` | Soft-delete order | -                |
 
+### Carts
+
+| Method | Path                          | Description      | Body             |
+| ------ | ----------------------------- | ---------------- | ---------------- |
+| GET    | `/api/v1/carts`               | Get user cart    | -                |
+| POST   | `/api/v1/carts`               | Create cart      | See schema below |
+| POST   | `/api/v1/carts/items`         | Add item to cart | See schema below |
+| PATCH  | `/api/v1/carts/items/:itemId` | Update item      | See schema below |
+| DELETE | `/api/v1/carts/items/:itemId` | Remove item      | -                |
+| DELETE | `/api/v1/carts`               | Clear cart       | -                |
+| POST   | `/api/v1/carts/checkout`      | Checkout cart    | See schema below |
+
 **Create Order Body:**
 
 ```json
@@ -184,6 +257,10 @@ JWT_REFRESH_EXPIRES_IN=7d
 
 # API Security
 API_KEY=your-api-key
+
+# Payment Service Integration
+PAYMENT_SERVICE_URL=http://localhost:3001
+PAYMENT_SERVICE_API_KEY=your-payment-service-api-key
 
 # Server
 PORT=3000
@@ -284,6 +361,8 @@ Create a secret in AWS Secrets Manager with all required environment variables:
   "JWT_REFRESH_SECRET": "your-refresh-secret",
   "JWT_REFRESH_EXPIRES_IN": "7",
   "API_KEY": "your-api-key",
+  "PAYMENT_SERVICE_URL": "http://payment-service:3001",
+  "PAYMENT_SERVICE_API_KEY": "your-payment-api-key",
   "SERVICE_NAME": "deliveroo-order-service",
   "PORT": "3000",
   "NODE_ENV": "production",
@@ -376,6 +455,13 @@ Runs on release publish or manual trigger:
 - **API versioning:** Routes under `/v1/` (add `/v2/` when breaking changes are needed)
 - **Logging:** Pino only — never `console.log`; `service` and `env` injected on every log line
 
+### Service-to-Service Communication
+
+- **Direct HTTP** between backend services (order → payment)
+- **API Key authentication** for service-to-service calls via `X-Api-Key` header
+- **BFF Gateway** (Main API) handles frontend requests and aggregates responses
+- **Event-based** communication (future) for async operations like notifications
+
 ---
 
 ## Database & Migrations
@@ -436,6 +522,12 @@ Detailed conventions are auto-loaded from `.claude/rules/`:
 - Non-root user execution
 - Minimal attack surface
 - Secret management via Doppler
+
+✅ **Service Communication**
+
+- API Key validation for inter-service calls
+- HTTPS in production
+- Minimal service exposure
 
 ---
 

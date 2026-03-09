@@ -13,7 +13,7 @@ export const createPayment = async (
   try {
     logger.info({ amount, currency, metaData }, 'Creating payment intent');
 
-    const response = await fetch(`${PAYMENT_SERVICE_URL}/api/payments/create-intent`, {
+    const response = await fetch(`${PAYMENT_SERVICE_URL}/api/payments/create-payment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
