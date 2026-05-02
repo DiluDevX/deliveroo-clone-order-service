@@ -1,3 +1,4 @@
 {
-  "cSpell.words": ["addgroup", "adduser", "appleboy", "Buildx", "dtos"]
+  "cSpell.words": ["addgroup", "adduser", "appleboy", "Buildx", "dtos"],
+  "postman.settings.dotenv-detection-notification-visibility": false
 }

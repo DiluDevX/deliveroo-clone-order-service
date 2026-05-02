@@ -58,7 +58,7 @@ export const assignDriverRequestBodySchema = z.object({
 });
 
 export const orderIdParamsSchema = z.object({
-  orderId: z.string().uuid('Invalid orderId'),
+  orderId: z.string().min(1, 'orderId is required'),
 });
 
 export const restaurantIdParamsSchema = z.object({

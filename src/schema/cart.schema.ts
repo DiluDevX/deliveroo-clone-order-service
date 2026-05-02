@@ -21,7 +21,7 @@ export const updateCartItemRequestBodySchema = z.object({
 });
 
 export const cartItemIdParamsSchema = z.object({
-  cartItemId: z.string().uuid('Invalid cartItemId'),
+  cartItemId: z.string().min(1, 'cartItemId is required'),
 });
 
 export const deliveryAddressSchema = z.object({

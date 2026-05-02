@@ -123,7 +123,7 @@ export const removeCartItem = async (
 };
 
 export const clearCart = async (
-  req: Request<unknown, CommonResponseDTO>,
+  req: Request,
   res: Response<CommonResponseDTO>,
   next: NextFunction
 ): Promise<void> => {

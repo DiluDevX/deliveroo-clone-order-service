@@ -1,7 +1,6 @@
 import { Cart, CartItem, Prisma } from '@prisma/client';
-import { isPrismaErrorWithCode, prisma } from '../config/database';
+import { prisma } from '../config/database';
 import { ConflictError, NotFoundError } from '../utils/errors';
-import { PRISMA_CODE } from '../utils/constants';
 import { AddItemToCartRequestBodyDTO } from '../dtos/cart.dto';
 
 type CartWithItems = Prisma.CartGetPayload<{
@@ -86,38 +85,46 @@ export const updateCartItemQuantity = async (
   quantity: number
 ): Promise<CartItem> => {
   const item = await prisma.cartItem.findFirst({
-    where: { id: cartItemId, cart: { userId } },
+    where: { id: cartItemId },
   });
 
   if (!item) {
     throw new NotFoundError('Cart item not found');
   }
 
-  try {
-    return await prisma.cartItem.update({
-      where: { id: cartItemId },
-      data: { quantity },
-    });
-  } catch (error) {
-    if (isPrismaErrorWithCode(error, PRISMA_CODE.NOT_FOUND)) {
-      throw new NotFoundError('Cart item not found');
-    }
-    throw error;
+  const cart = await prisma.cart.findFirst({
+    where: { id: item.cartId, userId },
+  });
+
+  if (!cart) {
+    throw new NotFoundError('Cart item not found');
   }
+
+  return await prisma.cartItem.update({
+    where: { id: cartItemId },
+    data: { quantity },
+  });
 };
 
 export const removeCartItem = async (cartItemId: string, userId: string): Promise<CartItem> => {
   const item = await prisma.cartItem.findFirst({
-    where: { id: cartItemId, cart: { userId } },
+    where: { id: cartItemId },
   });
 
   if (!item) {
+    throw new NotFoundError('Cart item not found');
+  }
+
+  const cart = await prisma.cart.findFirst({
+    where: { id: item.cartId, userId },
+  });
+
+  if (!cart) {
     throw new NotFoundError('Cart item not found');
   }
 
   const deleted = await prisma.cartItem.delete({ where: { id: cartItemId } });
 
-  // Remove cart if no items remain
   const remaining = await prisma.cartItem.count({ where: { cartId: item.cartId } });
   if (remaining === 0) {
     await prisma.cart.delete({ where: { id: item.cartId } });
