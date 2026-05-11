@@ -1,9 +1,21 @@
-import { Order, OrderStatus, ActorType, Prisma } from '@prisma/client';
+import { Order, OrderStatus, ActorType, PaymentStatus, Prisma } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { isPrismaErrorWithCode, prisma } from '../config/database';
-import { BadRequestError, InternalServerError, NotFoundError } from '../utils/errors';
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  InternalServerError,
+  NotFoundError,
+} from '../utils/errors';
 import { PRISMA_CODE } from '../utils/constants';
-import { CreateOrderRequestBodyDTO, ListOrdersQueryDTO } from '../dtos/order.dto';
+import {
+  CreateOrderPaymentIntentResponseDTO,
+  CreateOrderRequestBodyDTO,
+  ListOrdersQueryDTO,
+  PreparePaymentDetailsDTO,
+} from '../dtos/order.dto';
+import { paymentService } from './payment.service';
 import dayjs from 'dayjs';
 
 type OrderWithRelations = Prisma.OrderGetPayload<{
@@ -25,6 +37,8 @@ const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 };
 
 const MAX_ORDER_NUMBER_RETRIES = 5;
+const TOTAL_MISMATCH_TOLERANCE = 0.01;
+const PLATFORM_COMMISSION_PERCENTAGE = 15;
 
 const generateOrderNumber = (): string => {
   const date = dayjs().format('YYYYMMDD');
@@ -42,10 +56,10 @@ export const createOrder = async (
   actorId?: string,
   actorType?: ActorType
 ): Promise<OrderWithRelations> => {
-  return createOrderWithPayment(data, actorId, actorType, 'card', undefined, 'SUCCEEDED');
+  return createOrderBeforePaymentIntent(data, actorId, actorType, 'card', undefined, 'PENDING');
 };
 
-export const createOrderWithPayment = async (
+export const createOrderBeforePaymentIntent = async (
   data: CreateOrderRequestBodyDTO,
   actorId?: string,
   actorType?: ActorType,
@@ -162,6 +176,81 @@ export const findOrderByNumber = async (
     where: { orderNumber },
     include: orderInclude,
   });
+};
+
+export const prepareOrderPayment = async (
+  orderId: string,
+  userId: string,
+  expectedTotalAmount?: number
+): Promise<PreparePaymentDetailsDTO> => {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+
+  if (!order) {
+    throw new NotFoundError('Order not found');
+  }
+
+  if (order.userId !== userId) {
+    throw new ForbiddenError('Order does not belong to authenticated user');
+  }
+
+  if (order.status === OrderStatus.CANCELLED || order.status === OrderStatus.REFUNDED) {
+    throw new ConflictError('Cannot create a payment intent for this order state');
+  }
+
+  if (
+    order.paymentStatus !== PaymentStatus.PENDING &&
+    order.paymentStatus !== PaymentStatus.PROCESSING
+  ) {
+    throw new ConflictError('Order payment is not pending');
+  }
+
+  if (order.paymentMethod !== 'card') {
+    throw new BadRequestError('Order is not configured for card payment');
+  }
+
+  if (
+    expectedTotalAmount !== undefined &&
+    Math.abs(order.totalAmount - expectedTotalAmount) > TOTAL_MISMATCH_TOLERANCE
+  ) {
+    throw new ConflictError('Order total changed. Please review your cart before paying.');
+  }
+
+  return {
+    orderId: order.id,
+    userId: order.userId,
+    restaurantId: order.restaurantId,
+    amount: Math.round(order.totalAmount * 100),
+    currency: 'GBP',
+    paymentMethod: 'CARD',
+    commissionPercentage: PLATFORM_COMMISSION_PERCENTAGE,
+  };
+};
+
+export const createOrderPaymentIntent = async (
+  orderId: string,
+  userId: string,
+  expectedTotalAmount?: number
+): Promise<CreateOrderPaymentIntentResponseDTO> => {
+  const paymentDetails = await prepareOrderPayment(orderId, userId, expectedTotalAmount);
+  const paymentResult = await paymentService.createPaymentIntent(paymentDetails);
+
+  if (!paymentResult.success || !paymentResult.paymentId) {
+    throw new BadRequestError(`Payment failed: ${paymentResult.error ?? 'Unknown error'}`);
+  }
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      paymentId: paymentResult.paymentId,
+      paymentStatus: PaymentStatus.PROCESSING,
+    },
+  });
+
+  return {
+    paymentId: paymentResult.paymentId,
+    status: paymentResult.status ?? PaymentStatus.PROCESSING,
+    clientSecret: paymentResult.clientSecret,
+  };
 };
 
 export const listOrders = async (

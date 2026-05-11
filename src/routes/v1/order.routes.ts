@@ -7,6 +7,7 @@ import {
   listOrders,
   listOrdersByDriver,
   listOrdersByRestaurant,
+  preparePayment,
   updateOrderStatus,
 } from '../../controllers/v1/order.controller';
 import { validateBody, validateParams, validateQuery } from '../../middleware/validate.middleware';
@@ -17,13 +18,13 @@ import {
   driverIdParamsSchema,
   listOrdersQuerySchema,
   orderIdParamsSchema,
+  preparePaymentRequestBodySchema,
   restaurantIdParamsSchema,
   updateOrderStatusRequestBodySchema,
 } from '../../schema/order.schema';
 
 const router = Router();
 
-// Static sub-routes must be registered before /:orderId to avoid conflicts
 router.get(
   '/restaurant/:restaurantId',
   validateParams(restaurantIdParamsSchema),
@@ -43,6 +44,13 @@ router.get('/', validateQuery(listOrdersQuerySchema), listOrders);
 router.get('/:orderId', validateParams(orderIdParamsSchema), getOrder);
 
 router.post('/', validateBody(createOrderRequestBodySchema), createOrder);
+
+router.post(
+  '/:orderId/prepare-payment',
+  validateParams(orderIdParamsSchema),
+  validateBody(preparePaymentRequestBodySchema),
+  preparePayment
+);
 
 router.patch(
   '/:orderId/cancel',

@@ -8,10 +8,12 @@ import { CommonResponseDTO, PaginatedResponseDTO } from '../../dtos/common.dto';
 import {
   AssignDriverRequestBodyDTO,
   CancelOrderRequestBodyDTO,
+  CreateOrderPaymentIntentResponseDTO,
   CreateOrderRequestBodyDTO,
   DriverIdParamsDTO,
   ListOrdersQueryDTO,
   OrderIdParamsDTO,
+  PreparePaymentRequestBodyDTO,
   OrderResponseDTO,
   RestaurantIdParamsDTO,
   UpdateOrderStatusRequestBodyDTO,
@@ -72,6 +74,44 @@ export const getOrder = async (
     });
   } catch (error) {
     logger.error(error, 'get order error');
+    next(error);
+  }
+};
+
+export const preparePayment = async (
+  req: Request<
+    OrderIdParamsDTO,
+    CommonResponseDTO<CreateOrderPaymentIntentResponseDTO>,
+    PreparePaymentRequestBodyDTO
+  >,
+  res: Response<CommonResponseDTO<CreateOrderPaymentIntentResponseDTO>>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.actor?.userId;
+    if (!userId) throw new UnauthorizedError('X-User-Id header is required');
+
+    const { orderId } = req.params;
+    const { expectedTotalAmount } = req.body;
+
+    const paymentIntent = await orderService.createOrderPaymentIntent(
+      orderId,
+      userId,
+      expectedTotalAmount
+    );
+
+    logger.info(
+      { orderId, userId, paymentId: paymentIntent.paymentId },
+      'order payment intent created'
+    );
+
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      message: 'Payment intent created',
+      data: paymentIntent,
+    });
+  } catch (error) {
+    logger.error(error, 'create order payment intent error');
     next(error);
   }
 };

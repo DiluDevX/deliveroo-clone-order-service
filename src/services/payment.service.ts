@@ -1,29 +1,30 @@
 import { PaymentStatus } from '@prisma/client';
 import { environment } from '../config/environment';
-import { PaymentResult, PaymentIntent } from '../types/payment.types';
+import { CreatePaymentIntentPayload, PaymentResult, PaymentIntent } from '../types/payment.types';
 import { logger } from '../utils/logger';
 
 const PAYMENT_SERVICE_URL = environment.paymentServiceUrl;
 
-export const createPayment = async (
-  amount: number,
-  currency: string,
-  metaData: Record<string, string>
+export const createPaymentIntent = async (
+  payload: CreatePaymentIntentPayload
 ): Promise<PaymentResult> => {
   try {
-    logger.info({ amount, currency, metaData }, 'Creating payment intent');
+    logger.info(
+      { orderId: payload.orderId, amount: payload.amount, currency: payload.currency },
+      'Creating payment intent'
+    );
 
-    const response = await fetch(`${PAYMENT_SERVICE_URL}/api/payments/create-payment`, {
+    const response = await fetch(`${PAYMENT_SERVICE_URL}/api/v1/payments/create-intent`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': environment.paymentServiceApiKey,
+        'x-api-key': environment.paymentServiceApiKey,
+        'x-user-id': payload.userId,
+        'x-actor-id': payload.userId,
+        'x-actor-user-id': payload.userId,
+        'x-actor-type': 'SYSTEM',
       },
-      body: JSON.stringify({
-        amount: Math.round(amount * 100),
-        currency,
-        metaData,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -32,14 +33,21 @@ export const createPayment = async (
       return { success: false, error: `Payment service error: ${response.status}` };
     }
 
-    const data = (await response.json()) as PaymentIntent;
+    const result = (await response.json()) as { data?: PaymentIntent };
+    const data = result.data;
 
-    logger.info({ paymentId: data.id }, 'Payment intent created');
+    if (!data?.paymentId) {
+      logger.error({ result }, 'Payment service response missing paymentId');
+      return { success: false, error: 'Payment service response missing paymentId' };
+    }
+
+    logger.info({ paymentId: data.paymentId, orderId: payload.orderId }, 'Payment intent created');
 
     return {
       success: true,
-      paymentId: data.id,
+      paymentId: data.paymentId,
       clientSecret: data.clientSecret,
+      status: data.status,
     };
   } catch (error) {
     logger.error(error, 'Failed to create payment intent');
@@ -152,7 +160,7 @@ export const getPaymentStatus = async (paymentId: string): Promise<PaymentStatus
 };
 
 export const paymentService = {
-  createPayment,
+  createPaymentIntent,
   confirmPayment,
   refundPayment,
   getPaymentStatus,

@@ -6,6 +6,7 @@ import {
   driverIdParamsSchema,
   listOrdersQuerySchema,
   orderIdParamsSchema,
+  preparePaymentRequestBodySchema,
   restaurantIdParamsSchema,
   updateOrderStatusRequestBodySchema,
 } from '../schema/order.schema';
@@ -18,6 +19,7 @@ export type OrderIdParamsDTO = z.infer<typeof orderIdParamsSchema>;
 export type RestaurantIdParamsDTO = z.infer<typeof restaurantIdParamsSchema>;
 export type DriverIdParamsDTO = z.infer<typeof driverIdParamsSchema>;
 export type ListOrdersQueryDTO = z.infer<typeof listOrdersQuerySchema>;
+export type PreparePaymentRequestBodyDTO = z.infer<typeof preparePaymentRequestBodySchema>;
 
 export type OrderStatusDTO =
   | 'PENDING'
@@ -96,4 +98,20 @@ export interface OrderResponseDTO {
   statusHistory: OrderStatusHistoryResponseDTO[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface PreparePaymentDetailsDTO {
+  orderId: string;
+  userId: string;
+  restaurantId: string;
+  amount: number;
+  currency: 'GBP';
+  paymentMethod: 'CARD';
+  commissionPercentage: number;
+}
+
+export interface CreateOrderPaymentIntentResponseDTO {
+  paymentId: string;
+  status: string;
+  clientSecret?: string | null;
 }

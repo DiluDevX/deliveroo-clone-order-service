@@ -16,7 +16,6 @@ import {
 } from '../../dtos/cart.dto';
 import { OrderResponseDTO } from '../../dtos/order.dto';
 import { ActorType } from '@prisma/client';
-import { paymentService } from '../../services/payment.service';
 import * as restaurantService from '../../services/restaurant.service';
 
 export const getCart = async (
@@ -167,10 +166,6 @@ export const checkout = async (
     const actorType = req.actor?.type as ActorType;
     const actorId = req.actor?.actorId ?? userId;
 
-    let paymentId: string | undefined;
-    let clientSecret: string | undefined;
-    let paymentStatus: 'PENDING' | 'SUCCEEDED' = 'PENDING';
-
     const restaurant = await restaurantService.getRestaurant(cart.restaurantId);
 
     if (restaurant.status !== 'ACTIVE') {
@@ -204,28 +199,12 @@ export const checkout = async (
     }, 0);
     const deliveryFee = restaurant.deliveryCharge;
     const serviceFee = environment.serviceFee;
-    const totalAmount = subtotal + deliveryFee + serviceFee - (discountAmount ?? 0);
 
     if (subtotal < restaurant.minimumValue) {
       throw new BadRequestError(`Minimum order value is ${restaurant.minimumValue}`);
     }
 
-    if (paymentMethod === 'card') {
-      const paymentResult = await paymentService.createPayment(totalAmount, 'gbp', {
-        userId,
-        restaurantId: cart.restaurantId,
-      });
-
-      if (!paymentResult.success) {
-        throw new BadRequestError(`Payment failed: ${paymentResult.error}`);
-      }
-
-      paymentId = paymentResult.paymentId;
-      clientSecret = paymentResult.clientSecret;
-      paymentStatus = paymentResult.success ? 'SUCCEEDED' : 'PENDING';
-    }
-
-    const order = await orderService.createOrderWithPayment(
+    const order = await orderService.createOrderBeforePaymentIntent(
       {
         userId,
         restaurantId: cart.restaurantId,
@@ -242,8 +221,8 @@ export const checkout = async (
       actorId,
       actorType,
       paymentMethod ?? 'cash',
-      paymentId,
-      paymentStatus
+      undefined,
+      'PENDING'
     );
 
     await cartService.clearCart(userId);
@@ -255,10 +234,7 @@ export const checkout = async (
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: 'Order placed successfully',
-      data: {
-        ...response,
-        paymentClientSecret: clientSecret,
-      } as OrderResponseDTO & { paymentClientSecret?: string },
+      data: response,
     });
   } catch (error) {
     logger.error(error, 'checkout error');

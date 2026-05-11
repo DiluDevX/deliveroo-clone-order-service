@@ -57,6 +57,10 @@ export const assignDriverRequestBodySchema = z.object({
   driverId: z.string().min(1, 'driverId is required'),
 });
 
+export const preparePaymentRequestBodySchema = z.object({
+  expectedTotalAmount: z.number().min(0).optional(),
+});
+
 export const orderIdParamsSchema = z.object({
   orderId: z.string().min(1, 'orderId is required'),
 });
