@@ -2,6 +2,7 @@ import { Cart, CartItem, Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
 import { ConflictError, NotFoundError } from '../utils/errors';
 import { AddItemToCartRequestBodyDTO } from '../dtos/cart.dto';
+import * as restaurantService from './restaurant.service';
 
 type CartWithItems = Prisma.CartGetPayload<{
   include: { items: { include: { modifiers: true } } };
@@ -25,13 +26,16 @@ export const addItemToCart = async (
   userId: string,
   data: AddItemToCartRequestBodyDTO
 ): Promise<CartWithItems> => {
-  const { restaurantId, dishId, dishName, dishImageUrl, unitPrice, quantity, modifiers } = data;
+  const { restaurantId, dishId, quantity, modifiers } = data;
 
   const existingCart = await prisma.cart.findFirst({ where: { userId } });
 
   if (existingCart && existingCart.restaurantId !== restaurantId) {
     throw new ConflictError('Cannot add items from a different restaurant. Clear your cart first.');
   }
+
+  const dish = await restaurantService.getDish(dishId);
+  restaurantService.assertDishCanBeOrdered(dish, restaurantId);
 
   const cart = await prisma.cart.upsert({
     where: { userId_restaurantId: { userId, restaurantId } },
@@ -41,15 +45,15 @@ export const addItemToCart = async (
       items: {
         create: {
           dishId,
-          dishName,
-          dishImageUrl,
-          unitPrice,
+          dishName: dish.name,
+          dishImageUrl: dish.image,
+          unitPrice: dish.price,
           quantity,
           modifiers: {
             create: modifiers.map((m) => ({
               name: m.name,
               option: m.option,
-              extraPrice: m.extraPrice,
+              extraPrice: 0,
             })),
           },
         },
@@ -59,15 +63,15 @@ export const addItemToCart = async (
       items: {
         create: {
           dishId,
-          dishName,
-          dishImageUrl,
-          unitPrice,
+          dishName: dish.name,
+          dishImageUrl: dish.image,
+          unitPrice: dish.price,
           quantity,
           modifiers: {
             create: modifiers.map((m) => ({
               name: m.name,
               option: m.option,
-              extraPrice: m.extraPrice,
+              extraPrice: 0,
             })),
           },
         },

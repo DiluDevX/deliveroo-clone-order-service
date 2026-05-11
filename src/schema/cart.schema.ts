@@ -3,15 +3,15 @@ import { z } from 'zod';
 export const cartItemModifierSchema = z.object({
   name: z.string().min(1),
   option: z.string().min(1),
-  extraPrice: z.number().min(0),
+  extraPrice: z.number().min(0).optional().default(0),
 });
 
 export const addItemToCartRequestBodySchema = z.object({
   restaurantId: z.string().min(1, 'restaurantId is required'),
   dishId: z.string().min(1, 'dishId is required'),
-  dishName: z.string().min(1, 'dishName is required'),
+  dishName: z.string().min(1, 'dishName is required').optional(),
   dishImageUrl: z.string().url().optional(),
-  unitPrice: z.number().positive('unitPrice must be positive'),
+  unitPrice: z.number().positive('unitPrice must be positive').optional(),
   quantity: z.number().int().positive('quantity must be a positive integer'),
   modifiers: z.array(cartItemModifierSchema).optional().default([]),
 });
@@ -38,10 +38,10 @@ export const deliveryAddressSchema = z.object({
 
 export const checkoutRequestBodySchema = z.object({
   deliveryAddress: deliveryAddressSchema,
-  restaurantName: z.string().min(1, 'restaurantName is required'),
-  restaurantAddress: z.string().min(1, 'restaurantAddress is required'),
-  deliveryFee: z.number().min(0),
-  serviceFee: z.number().min(0),
+  restaurantName: z.string().min(1, 'restaurantName is required').optional(),
+  restaurantAddress: z.string().min(1, 'restaurantAddress is required').optional(),
+  deliveryFee: z.number().min(0).optional(),
+  serviceFee: z.number().min(0).optional(),
   discountAmount: z.number().min(0).optional().default(0),
   promoCode: z.string().optional(),
   estimatedDeliveryAt: z.string().datetime().optional(),

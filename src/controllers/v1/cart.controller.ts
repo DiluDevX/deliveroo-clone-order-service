@@ -6,6 +6,7 @@ import { logger } from '../../utils/logger';
 import { BadRequestError, UnauthorizedError } from '../../utils/errors';
 import { mapCartToResponse, mapOrderToResponse } from '../../utils/mappers';
 import { CommonResponseDTO } from '../../dtos/common.dto';
+import { environment } from '../../config/environment';
 import {
   AddItemToCartRequestBodyDTO,
   CartItemIdParamsDTO,
@@ -16,6 +17,7 @@ import {
 import { OrderResponseDTO } from '../../dtos/order.dto';
 import { ActorType } from '@prisma/client';
 import { paymentService } from '../../services/payment.service';
+import * as restaurantService from '../../services/restaurant.service';
 
 export const getCart = async (
   req: Request<unknown, CommonResponseDTO<CartResponseDTO>>,
@@ -159,17 +161,8 @@ export const checkout = async (
       throw new BadRequestError('Cart is empty or does not exist');
     }
 
-    const {
-      deliveryAddress,
-      restaurantName,
-      restaurantAddress,
-      deliveryFee,
-      serviceFee,
-      discountAmount,
-      promoCode,
-      estimatedDeliveryAt,
-      paymentMethod,
-    } = req.body;
+    const { deliveryAddress, discountAmount, promoCode, estimatedDeliveryAt, paymentMethod } =
+      req.body;
 
     const actorType = req.actor?.type as ActorType;
     const actorId = req.actor?.actorId ?? userId;
@@ -178,14 +171,47 @@ export const checkout = async (
     let clientSecret: string | undefined;
     let paymentStatus: 'PENDING' | 'SUCCEEDED' = 'PENDING';
 
-    if (paymentMethod === 'card') {
-      const subtotal = cart.items.reduce((sum, item) => {
-        const modifiersTotal = item.modifiers.reduce((ms, m) => ms + m.extraPrice, 0);
-        return sum + (item.unitPrice + modifiersTotal) * item.quantity;
-      }, 0);
-      const totalAmount = subtotal + deliveryFee + serviceFee - (discountAmount ?? 0);
+    const restaurant = await restaurantService.getRestaurant(cart.restaurantId);
 
-      const paymentResult = await paymentService.createPayment(totalAmount, 'usd', {
+    if (restaurant.status !== 'ACTIVE') {
+      throw new BadRequestError('Restaurant is not currently accepting orders');
+    }
+
+    const pricedItems = await Promise.all(
+      cart.items.map(async (item) => {
+        const dish = await restaurantService.getDish(item.dishId);
+        restaurantService.assertDishCanBeOrdered(dish, cart.restaurantId);
+
+        return {
+          dishId: dish.id,
+          dishName: dish.name,
+          dishImageUrl: dish.image ?? undefined,
+          dishCategory: dish.categoryId,
+          unitPrice: dish.price,
+          quantity: item.quantity,
+          modifiers: item.modifiers.map((m) => ({
+            name: m.name,
+            option: m.option,
+            extraPrice: 0,
+          })),
+        };
+      })
+    );
+
+    const subtotal = pricedItems.reduce((sum, item) => {
+      const modifiersTotal = item.modifiers.reduce((ms, m) => ms + m.extraPrice, 0);
+      return sum + (item.unitPrice + modifiersTotal) * item.quantity;
+    }, 0);
+    const deliveryFee = restaurant.deliveryCharge;
+    const serviceFee = environment.serviceFee;
+    const totalAmount = subtotal + deliveryFee + serviceFee - (discountAmount ?? 0);
+
+    if (subtotal < restaurant.minimumValue) {
+      throw new BadRequestError(`Minimum order value is ${restaurant.minimumValue}`);
+    }
+
+    if (paymentMethod === 'card') {
+      const paymentResult = await paymentService.createPayment(totalAmount, 'gbp', {
         userId,
         restaurantId: cart.restaurantId,
       });
@@ -203,21 +229,10 @@ export const checkout = async (
       {
         userId,
         restaurantId: cart.restaurantId,
-        items: cart.items.map((item) => ({
-          dishId: item.dishId,
-          dishName: item.dishName,
-          dishImageUrl: item.dishImageUrl ?? undefined,
-          unitPrice: item.unitPrice,
-          quantity: item.quantity,
-          modifiers: item.modifiers.map((m) => ({
-            name: m.name,
-            option: m.option,
-            extraPrice: m.extraPrice,
-          })),
-        })),
+        items: pricedItems,
         deliveryAddress,
-        restaurantName,
-        restaurantAddress,
+        restaurantName: restaurant.name,
+        restaurantAddress: '',
         deliveryFee,
         serviceFee,
         discountAmount,

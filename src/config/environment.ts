@@ -33,6 +33,9 @@ interface Environment {
 
   paymentServiceUrl: string;
   paymentServiceApiKey: string;
+  restaurantServiceUrl: string;
+  restaurantServiceApiKey: string;
+  serviceFee: number;
 }
 
 function requireEnv(name: string): string {
@@ -132,4 +135,7 @@ export const environment: Environment = {
   serviceName: requireEnv('SERVICE_NAME'),
   paymentServiceUrl: optionalEnv('PAYMENT_SERVICE_URL', 'http://localhost:3001'),
   paymentServiceApiKey: optionalEnv('PAYMENT_SERVICE_API_KEY', ''),
+  restaurantServiceUrl: optionalEnv('RESTAURANT_SERVICE_URL', 'http://localhost:4004'),
+  restaurantServiceApiKey: optionalEnv('RESTAURANT_SERVICE_API_KEY', ''),
+  serviceFee: Number(optionalEnv('SERVICE_FEE', '0.99')),
 };
