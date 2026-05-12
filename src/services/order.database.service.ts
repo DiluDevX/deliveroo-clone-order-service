@@ -56,7 +56,14 @@ export const createOrder = async (
   actorId?: string,
   actorType?: ActorType
 ): Promise<OrderWithRelations> => {
-  return createOrderBeforePaymentIntent(data, actorId, actorType, 'card', undefined, 'PENDING');
+  return createOrderBeforePaymentIntent(
+    data,
+    actorId,
+    actorType,
+    'card',
+    undefined,
+    PaymentStatus.PENDING
+  );
 };
 
 export const createOrderBeforePaymentIntent = async (
@@ -65,7 +72,7 @@ export const createOrderBeforePaymentIntent = async (
   actorType?: ActorType,
   paymentMethod?: string,
   paymentId?: string,
-  paymentStatus: 'PENDING' | 'SUCCEEDED' | 'FAILED' = 'PENDING'
+  paymentStatus: PaymentStatus = PaymentStatus.PENDING
 ): Promise<OrderWithRelations> => {
   const {
     userId,
@@ -251,6 +258,54 @@ export const createOrderPaymentIntent = async (
     status: paymentResult.status ?? PaymentStatus.PROCESSING,
     clientSecret: paymentResult.clientSecret,
   };
+};
+
+export const syncOrderPaymentStatus = async (
+  orderId: string,
+  paymentId: string,
+  paymentStatus: PaymentStatus
+): Promise<OrderWithRelations> => {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+
+  if (!order) {
+    throw new NotFoundError('Order not found');
+  }
+
+  if (order.paymentId !== paymentId) {
+    throw new ConflictError('Payment id does not match this order');
+  }
+
+  if (order.paymentStatus === paymentStatus) {
+    const currentOrder = await findOrderById(orderId);
+    if (!currentOrder) throw new NotFoundError('Order not found');
+    return currentOrder;
+  }
+
+  if (order.paymentStatus !== PaymentStatus.PROCESSING) {
+    throw new ConflictError(
+      `Cannot update payment from ${order.paymentStatus} to ${paymentStatus}`
+    );
+  }
+
+  const data: Prisma.OrderUpdateInput = { paymentStatus };
+
+  if (paymentStatus === PaymentStatus.SUCCEEDED && order.status === OrderStatus.PENDING) {
+    data.status = OrderStatus.CONFIRMED;
+    data.statusHistory = {
+      create: {
+        status: OrderStatus.CONFIRMED,
+        note: 'Payment succeeded',
+        actorId: 'payment-service',
+        actorType: ActorType.SYSTEM,
+      },
+    };
+  }
+
+  return prisma.order.update({
+    where: { id: orderId },
+    data,
+    include: orderInclude,
+  });
 };
 
 export const listOrders = async (

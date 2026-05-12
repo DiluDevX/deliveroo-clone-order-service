@@ -13,6 +13,7 @@ const orderStatusEnum = z.enum([
 ]);
 
 const actorTypeEnum = z.enum(['USER', 'RESTAURANT', 'DRIVER', 'SYSTEM']);
+const paymentStatusEnum = z.enum(['PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED', 'CANCELLED']);
 
 const orderItemModifierSchema = z.object({
   name: z.string().min(1),
@@ -59,6 +60,11 @@ export const assignDriverRequestBodySchema = z.object({
 
 export const preparePaymentRequestBodySchema = z.object({
   expectedTotalAmount: z.number().min(0).optional(),
+});
+
+export const updatePaymentStatusRequestBodySchema = z.object({
+  paymentId: z.string().min(1, 'paymentId is required'),
+  paymentStatus: paymentStatusEnum,
 });
 
 export const orderIdParamsSchema = z.object({

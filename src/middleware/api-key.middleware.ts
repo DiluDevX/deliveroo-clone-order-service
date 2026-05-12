@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { timingSafeEqual } from 'crypto';
 import { UnauthorizedError } from '../utils/errors';
+import { environment } from '../config/environment';
 
 const API_KEY_HEADER = 'x-api-key';
 
 export function apiKeyMiddleware(req: Request, _res: Response, next: NextFunction): void {
-  const apiKey = process.env.API_KEY;
+  const apiKey = environment.bffAPIKey;
 
   if (!apiKey) {
     // If no API key is configured, skip validation

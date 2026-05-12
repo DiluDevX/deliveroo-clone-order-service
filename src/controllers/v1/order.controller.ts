@@ -16,6 +16,7 @@ import {
   PreparePaymentRequestBodyDTO,
   OrderResponseDTO,
   RestaurantIdParamsDTO,
+  UpdatePaymentStatusRequestBodyDTO,
   UpdateOrderStatusRequestBodyDTO,
 } from '../../dtos/order.dto';
 import { OrderStatus } from '@prisma/client';
@@ -112,6 +113,34 @@ export const preparePayment = async (
     });
   } catch (error) {
     logger.error(error, 'create order payment intent error');
+    next(error);
+  }
+};
+
+export const updatePaymentStatus = async (
+  req: Request<
+    OrderIdParamsDTO,
+    CommonResponseDTO<OrderResponseDTO>,
+    UpdatePaymentStatusRequestBodyDTO
+  >,
+  res: Response<CommonResponseDTO<OrderResponseDTO>>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { orderId } = req.params;
+    const { paymentId, paymentStatus } = req.body;
+
+    const order = await orderService.syncOrderPaymentStatus(orderId, paymentId, paymentStatus);
+
+    logger.info({ orderId, paymentId, paymentStatus }, 'order payment status synced');
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Order payment status updated',
+      data: mapOrderToResponse(order) ?? undefined,
+    });
+  } catch (error) {
+    logger.error(error, 'update order payment status error');
     next(error);
   }
 };

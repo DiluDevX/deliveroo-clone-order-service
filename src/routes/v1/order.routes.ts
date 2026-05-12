@@ -8,6 +8,7 @@ import {
   listOrdersByDriver,
   listOrdersByRestaurant,
   preparePayment,
+  updatePaymentStatus,
   updateOrderStatus,
 } from '../../controllers/v1/order.controller';
 import { validateBody, validateParams, validateQuery } from '../../middleware/validate.middleware';
@@ -20,6 +21,7 @@ import {
   orderIdParamsSchema,
   preparePaymentRequestBodySchema,
   restaurantIdParamsSchema,
+  updatePaymentStatusRequestBodySchema,
   updateOrderStatusRequestBodySchema,
 } from '../../schema/order.schema';
 
@@ -50,6 +52,13 @@ router.post(
   validateParams(orderIdParamsSchema),
   validateBody(preparePaymentRequestBodySchema),
   preparePayment
+);
+
+router.post(
+  '/:orderId/payment-status',
+  validateParams(orderIdParamsSchema),
+  validateBody(updatePaymentStatusRequestBodySchema),
+  updatePaymentStatus
 );
 
 router.patch(

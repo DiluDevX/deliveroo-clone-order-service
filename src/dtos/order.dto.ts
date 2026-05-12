@@ -8,6 +8,7 @@ import {
   orderIdParamsSchema,
   preparePaymentRequestBodySchema,
   restaurantIdParamsSchema,
+  updatePaymentStatusRequestBodySchema,
   updateOrderStatusRequestBodySchema,
 } from '../schema/order.schema';
 
@@ -20,6 +21,9 @@ export type RestaurantIdParamsDTO = z.infer<typeof restaurantIdParamsSchema>;
 export type DriverIdParamsDTO = z.infer<typeof driverIdParamsSchema>;
 export type ListOrdersQueryDTO = z.infer<typeof listOrdersQuerySchema>;
 export type PreparePaymentRequestBodyDTO = z.infer<typeof preparePaymentRequestBodySchema>;
+export type UpdatePaymentStatusRequestBodyDTO = z.infer<
+  typeof updatePaymentStatusRequestBodySchema
+>;
 
 export type OrderStatusDTO =
   | 'PENDING'

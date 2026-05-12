@@ -15,7 +15,7 @@ import {
   UpdateCartItemRequestBodyDTO,
 } from '../../dtos/cart.dto';
 import { OrderResponseDTO } from '../../dtos/order.dto';
-import { ActorType } from '@prisma/client';
+import { ActorType, PaymentStatus } from '@prisma/client';
 import * as restaurantService from '../../services/restaurant.service';
 
 export const getCart = async (
@@ -222,7 +222,7 @@ export const checkout = async (
       actorType,
       paymentMethod ?? 'cash',
       undefined,
-      'PENDING'
+      PaymentStatus.PENDING
     );
 
     await cartService.clearCart(userId);
