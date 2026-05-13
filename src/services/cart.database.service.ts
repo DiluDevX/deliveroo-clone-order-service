@@ -1,7 +1,7 @@
 import { Cart, CartItem, Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
 import { ConflictError, NotFoundError } from '../utils/errors';
-import { AddItemToCartRequestBodyDTO } from '../dtos/cart.dto';
+import { AddItemToCartRequestBodyDTO, SyncCartRequestBodyDTO } from '../dtos/cart.dto';
 import * as restaurantService from './restaurant.service';
 
 type CartWithItems = Prisma.CartGetPayload<{
@@ -81,6 +81,79 @@ export const addItemToCart = async (
   });
 
   return cart;
+};
+
+export const replaceCart = async (
+  userId: string,
+  data: SyncCartRequestBodyDTO
+): Promise<CartWithItems | null> => {
+  const { restaurantId, items } = data;
+
+  if (items.length === 0) {
+    await clearCart(userId);
+    return null;
+  }
+
+  const pricedItems = await Promise.all(
+    items.map(async (item) => {
+      const dish = await restaurantService.getDish(item.dishId);
+      restaurantService.assertDishCanBeOrdered(dish, restaurantId);
+
+      return {
+        dishId: dish.id,
+        dishName: dish.name,
+        dishImageUrl: dish.image,
+        unitPrice: dish.price,
+        quantity: item.quantity,
+        modifiers: item.modifiers.map((modifier) => ({
+          name: modifier.name,
+          option: modifier.option,
+          extraPrice: 0,
+        })),
+      };
+    })
+  );
+
+  return prisma.$transaction(async (tx) => {
+    const existingCart = await tx.cart.findFirst({ where: { userId } });
+
+    if (existingCart) {
+      const existingItems = await tx.cartItem.findMany({
+        where: { cartId: existingCart.id },
+        select: { id: true },
+      });
+      const existingItemIds = existingItems.map((item) => item.id);
+
+      if (existingItemIds.length > 0) {
+        await tx.cartItemModifier.deleteMany({
+          where: { cartItemId: { in: existingItemIds } },
+        });
+      }
+
+      await tx.cartItem.deleteMany({ where: { cartId: existingCart.id } });
+      await tx.cart.delete({ where: { id: existingCart.id } });
+    }
+
+    return tx.cart.create({
+      data: {
+        userId,
+        restaurantId,
+        items: {
+          create: pricedItems.map((item) => ({
+            dishId: item.dishId,
+            dishName: item.dishName,
+            dishImageUrl: item.dishImageUrl,
+            unitPrice: item.unitPrice,
+            quantity: item.quantity,
+            modifiers: {
+              create: item.modifiers,
+            },
+          })),
+        },
+      },
+      include: { items: { include: { modifiers: true } } },
+    });
+  });
 };
 
 export const updateCartItemQuantity = async (

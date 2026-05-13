@@ -4,11 +4,13 @@ import {
   cartItemIdParamsSchema,
   cartItemModifierSchema,
   checkoutRequestBodySchema,
+  syncCartRequestBodySchema,
   updateCartItemRequestBodySchema,
 } from '../schema/cart.schema';
 
 export type CartItemModifierDTO = z.infer<typeof cartItemModifierSchema>;
 export type AddItemToCartRequestBodyDTO = z.infer<typeof addItemToCartRequestBodySchema>;
+export type SyncCartRequestBodyDTO = z.infer<typeof syncCartRequestBodySchema>;
 export type UpdateCartItemRequestBodyDTO = z.infer<typeof updateCartItemRequestBodySchema>;
 export type CartItemIdParamsDTO = z.infer<typeof cartItemIdParamsSchema>;
 export type CheckoutRequestBodyDTO = z.infer<typeof checkoutRequestBodySchema>;

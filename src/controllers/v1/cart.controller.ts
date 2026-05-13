@@ -12,6 +12,7 @@ import {
   CartItemIdParamsDTO,
   CartResponseDTO,
   CheckoutRequestBodyDTO,
+  SyncCartRequestBodyDTO,
   UpdateCartItemRequestBodyDTO,
 } from '../../dtos/cart.dto';
 import { OrderResponseDTO } from '../../dtos/order.dto';
@@ -62,6 +63,33 @@ export const addItemToCart = async (
     });
   } catch (error) {
     logger.error(error, 'add item to cart error');
+    next(error);
+  }
+};
+
+export const syncCart = async (
+  req: Request<unknown, CommonResponseDTO<CartResponseDTO>, SyncCartRequestBodyDTO>,
+  res: Response<CommonResponseDTO<CartResponseDTO>>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.actor?.userId;
+    if (!userId) throw new UnauthorizedError('X-User-Id header is required');
+
+    const cart = await cartService.replaceCart(userId, req.body);
+
+    logger.info(
+      { userId, cartId: cart?.id, itemCount: req.body.items.length },
+      'cart synced from client'
+    );
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: cart ? 'Cart synced' : 'Cart cleared',
+      data: mapCartToResponse(cart) ?? undefined,
+    });
+  } catch (error) {
+    logger.error(error, 'sync cart error');
     next(error);
   }
 };

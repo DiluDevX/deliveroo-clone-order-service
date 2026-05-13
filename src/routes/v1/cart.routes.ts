@@ -5,6 +5,7 @@ import {
   clearCart,
   getCart,
   removeCartItem,
+  syncCart,
   updateCartItem,
 } from '../../controllers/v1/cart.controller';
 import { validateBody, validateParams } from '../../middleware/validate.middleware';
@@ -12,6 +13,7 @@ import {
   addItemToCartRequestBodySchema,
   cartItemIdParamsSchema,
   checkoutRequestBodySchema,
+  syncCartRequestBodySchema,
   updateCartItemRequestBodySchema,
 } from '../../schema/cart.schema';
 
@@ -20,6 +22,8 @@ const router = Router();
 router.get('/', getCart);
 
 router.post('/', validateBody(addItemToCartRequestBodySchema), addItemToCart);
+
+router.post('/sync', validateBody(syncCartRequestBodySchema), syncCart);
 
 router.put(
   '/items/:cartItemId',

@@ -16,6 +16,17 @@ export const addItemToCartRequestBodySchema = z.object({
   modifiers: z.array(cartItemModifierSchema).optional().default([]),
 });
 
+export const syncCartItemSchema = z.object({
+  dishId: z.string().min(1, 'dishId is required'),
+  quantity: z.number().int().positive('quantity must be a positive integer'),
+  modifiers: z.array(cartItemModifierSchema).optional().default([]),
+});
+
+export const syncCartRequestBodySchema = z.object({
+  restaurantId: z.string().min(1, 'restaurantId is required'),
+  items: z.array(syncCartItemSchema).default([]),
+});
+
 export const updateCartItemRequestBodySchema = z.object({
   quantity: z.number().int().positive('quantity must be a positive integer'),
 });

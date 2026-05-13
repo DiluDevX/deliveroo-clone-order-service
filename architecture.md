@@ -113,14 +113,15 @@ Current fallback is SYSTEM when x-actor-type is missing, but cart checkout still
 
 ## Cart Routes
 
-| Method | Path                       | Body                     | Notes                            |
-| ------ | -------------------------- | ------------------------ | -------------------------------- |
-| GET    | /v1/cart/                  | none                     | Gets current user's active cart  |
-| POST   | /v1/cart/                  | AddItemToCartRequestBody | Adds item to current user's cart |
-| PUT    | /v1/cart/items/:cartItemId | { quantity }             | Quantity must be positive        |
-| DELETE | /v1/cart/items/:cartItemId | none                     | Removes item                     |
-| DELETE | /v1/cart/                  | none                     | Clears cart                      |
-| POST   | /v1/cart/checkout          | CheckoutRequestBody      | Converts cart into order         |
+| Method | Path                       | Body                     | Notes                                 |
+| ------ | -------------------------- | ------------------------ | ------------------------------------- |
+| GET    | /v1/cart/                  | none                     | Gets current user's active cart       |
+| POST   | /v1/cart/                  | AddItemToCartRequestBody | Adds item to current user's cart      |
+| POST   | /v1/cart/sync              | SyncCartRequestBody      | Replaces server cart with client cart |
+| PUT    | /v1/cart/items/:cartItemId | { quantity }             | Quantity must be positive             |
+| DELETE | /v1/cart/items/:cartItemId | none                     | Removes item                          |
+| DELETE | /v1/cart/                  | none                     | Clears cart                           |
+| POST   | /v1/cart/checkout          | CheckoutRequestBody      | Converts cart into order              |
 
 ### Add Item Body
 
@@ -137,6 +138,25 @@ Current fallback is SYSTEM when x-actor-type is missing, but cart checkout still
 ```
 
 The service rejects adding items from a different restaurant while a cart exists.
+
+### Sync Cart Body
+
+Use this for login/session cart reconciliation when the browser has a local cart. It replaces the user's active server cart with the submitted items in one request.
+
+```json
+{
+  "restaurantId": "restaurant-id",
+  "items": [
+    {
+      "dishId": "dish-id",
+      "quantity": 2,
+      "modifiers": []
+    }
+  ]
+}
+```
+
+The service validates dishes against the restaurant service and stores current server-side dish names, images, and prices. Frontend item names and prices are not trusted.
 
 ### Checkout Body
 
