@@ -1,9 +1,8 @@
 # [1.0.0-beta.2](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2026-05-27)
 
-
 ### Features
 
-* validate DATABASE_URL in environment configuration for order service deployment ([3c09491](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/3c094918e7696105571f3e56fd12dfe3c026696a))
+- validate DATABASE_URL in environment configuration for order service deployment ([3c09491](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/3c094918e7696105571f3e56fd12dfe3c026696a))
 
 # 1.0.0-beta.1 (2026-05-27)
 

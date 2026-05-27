@@ -16,7 +16,7 @@ permissions:
 env:
   IMAGE_NAME: order-service
   CONTAINER_NAME: order-service
-  CONTAINER_PORT: '3000'
+  CONTAINER_PORT: '3005'
   DOCKER_NETWORK: deliveroo-dev
   SERVICE_DIR: /opt/deliveroo/order-service
 
