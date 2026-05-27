@@ -1,3 +1,10 @@
+# [1.0.0-beta.5](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2026-05-27)
+
+
+### Bug Fixes
+
+* expose order service health check publicly ([973ca78](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/973ca788e04bb48aaee88bb5d2675a37f7eb3c9c))
+
 # [1.0.0-beta.4](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2026-05-27)
 
 ### Features
