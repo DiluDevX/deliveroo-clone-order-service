@@ -1,3 +1,10 @@
+# [1.0.0-beta.3](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-05-27)
+
+
+### Features
+
+* update DATABASE_URL to use MongoDB and adjust container port in deployment workflow ([4d8ca5c](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/4d8ca5c63fb6ec0981146237bf97448eae3631fe))
+
 # [1.0.0-beta.2](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2026-05-27)
 
 ### Features
