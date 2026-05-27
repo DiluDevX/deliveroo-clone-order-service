@@ -149,6 +149,10 @@ jobs:
           ${{ secrets.ORDER_SERVICE_ENV_DEV }}
           ORDER_SERVICE_ENV
           chmod 600 "$SERVICE_DIR/.env"
+          if ! grep -q '^DATABASE_URL=' "$SERVICE_DIR/.env"; then
+            echo "ORDER_SERVICE_ENV_DEV must include DATABASE_URL"
+            exit 1
+          fi
 
           docker network inspect "$DOCKER_NETWORK" >/dev/null 2>&1 || docker network create "$DOCKER_NETWORK"
 
