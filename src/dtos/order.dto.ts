@@ -36,6 +36,13 @@ export type OrderStatusDTO =
   | 'REFUNDED';
 
 export type ActorTypeDTO = 'USER' | 'RESTAURANT' | 'DRIVER' | 'SYSTEM';
+export type PaymentStatusDTO =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'SUCCEEDED'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'CANCELLED';
 
 export interface OrderItemModifierResponseDTO {
   id: string;
@@ -84,6 +91,10 @@ export interface OrderResponseDTO {
   restaurantId: string;
   driverId: string | null;
   status: OrderStatusDTO;
+  paymentStatus: PaymentStatusDTO;
+  paymentId: string | null;
+  paymentMethod: string | null;
+  paymentExpiresAt: Date | null;
   subtotal: number;
   deliveryFee: number;
   serviceFee: number;

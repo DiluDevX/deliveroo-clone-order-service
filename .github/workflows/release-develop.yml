@@ -1,4 +1,4 @@
-name: CI/CD — Development Release
+name: CI/CD - Development Deploy
 
 on:
   push:
@@ -11,10 +11,14 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: order-service-develop-deploy
+  cancel-in-progress: true
+
 jobs:
-  release-development:
-    name: Release to Development
-    uses: ./.github/workflows/deploy.yml
+  deploy-development:
+    name: Deploy to Azure Development
+    uses: ./.github/workflows/deploy-to-azure.yml
     with:
       environment: development
     secrets: inherit

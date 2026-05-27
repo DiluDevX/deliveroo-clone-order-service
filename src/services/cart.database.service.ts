@@ -3,10 +3,23 @@ import { prisma } from '../config/database';
 import { ConflictError, NotFoundError } from '../utils/errors';
 import { AddItemToCartRequestBodyDTO, SyncCartRequestBodyDTO } from '../dtos/cart.dto';
 import * as restaurantService from './restaurant.service';
+import { PRISMA_CODE } from '../utils/constants';
 
 type CartWithItems = Prisma.CartGetPayload<{
   include: { items: { include: { modifiers: true } } };
 }>;
+
+const WRITE_CONFLICT_CODE = 'P2034';
+const MAX_CART_WRITE_RETRIES = 3;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isRetryableCartWriteError = (error: unknown): boolean => {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === WRITE_CONFLICT_CODE || error.code === PRISMA_CODE.CONFLICT)
+  );
+};
 
 export const findCartByUser = async (userId: string): Promise<CartWithItems | null> => {
   return prisma.cart.findFirst({
@@ -42,45 +55,74 @@ export const addItemToCart = async (
     create: {
       userId,
       restaurantId,
-      items: {
-        create: {
-          dishId,
-          dishName: dish.name,
-          dishImageUrl: dish.image,
-          unitPrice: dish.price,
-          quantity,
-          modifiers: {
-            create: modifiers.map((m) => ({
-              name: m.name,
-              option: m.option,
-              extraPrice: 0,
-            })),
-          },
-        },
-      },
     },
-    update: {
-      items: {
-        create: {
-          dishId,
-          dishName: dish.name,
-          dishImageUrl: dish.image,
-          unitPrice: dish.price,
-          quantity,
-          modifiers: {
-            create: modifiers.map((m) => ({
-              name: m.name,
-              option: m.option,
-              extraPrice: 0,
-            })),
-          },
-        },
-      },
-    },
-    include: { items: { include: { modifiers: true } } },
+    update: {},
   });
 
-  return cart;
+  const modifierData = modifiers.map((m) => ({
+    name: m.name,
+    option: m.option,
+    extraPrice: 0,
+  }));
+
+  for (let attempt = 1; attempt <= MAX_CART_WRITE_RETRIES; attempt++) {
+    try {
+      await prisma.$transaction(async (tx) => {
+        const existingItem = await tx.cartItem.findUnique({
+          where: { cartId_dishId: { cartId: cart.id, dishId } },
+          select: { id: true },
+        });
+
+        if (existingItem) {
+          await tx.cartItemModifier.deleteMany({
+            where: { cartItemId: existingItem.id },
+          });
+
+          await tx.cartItem.update({
+            where: { id: existingItem.id },
+            data: {
+              dishName: dish.name,
+              dishImageUrl: dish.image,
+              unitPrice: dish.price,
+              quantity,
+              modifiers: {
+                create: modifierData,
+              },
+            },
+          });
+          return;
+        }
+
+        await tx.cartItem.create({
+          data: {
+            cartId: cart.id,
+            dishId,
+            dishName: dish.name,
+            dishImageUrl: dish.image,
+            unitPrice: dish.price,
+            quantity,
+            modifiers: {
+              create: modifierData,
+            },
+          },
+        });
+      });
+      break;
+    } catch (error) {
+      if (!isRetryableCartWriteError(error) || attempt === MAX_CART_WRITE_RETRIES) {
+        throw error;
+      }
+
+      await wait(attempt * 50);
+    }
+  }
+
+  const updatedCart = await findCartById(cart.id);
+  if (!updatedCart) {
+    throw new NotFoundError('Cart not found');
+  }
+
+  return updatedCart;
 };
 
 export const replaceCart = async (
@@ -114,46 +156,59 @@ export const replaceCart = async (
     })
   );
 
-  return prisma.$transaction(async (tx) => {
-    const existingCart = await tx.cart.findFirst({ where: { userId } });
+  // Retry logic for transaction conflicts
+  for (let attempt = 1; attempt <= MAX_CART_WRITE_RETRIES; attempt++) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const existingCart = await tx.cart.findFirst({ where: { userId } });
 
-    if (existingCart) {
-      const existingItems = await tx.cartItem.findMany({
-        where: { cartId: existingCart.id },
-        select: { id: true },
-      });
-      const existingItemIds = existingItems.map((item) => item.id);
+        if (existingCart) {
+          const existingItems = await tx.cartItem.findMany({
+            where: { cartId: existingCart.id },
+            select: { id: true },
+          });
+          const existingItemIds = existingItems.map((item) => item.id);
 
-      if (existingItemIds.length > 0) {
-        await tx.cartItemModifier.deleteMany({
-          where: { cartItemId: { in: existingItemIds } },
+          if (existingItemIds.length > 0) {
+            await tx.cartItemModifier.deleteMany({
+              where: { cartItemId: { in: existingItemIds } },
+            });
+          }
+
+          await tx.cartItem.deleteMany({ where: { cartId: existingCart.id } });
+          await tx.cart.delete({ where: { id: existingCart.id } });
+        }
+
+        return tx.cart.create({
+          data: {
+            userId,
+            restaurantId,
+            items: {
+              create: pricedItems.map((item) => ({
+                dishId: item.dishId,
+                dishName: item.dishName,
+                dishImageUrl: item.dishImageUrl,
+                unitPrice: item.unitPrice,
+                quantity: item.quantity,
+                modifiers: {
+                  create: item.modifiers,
+                },
+              })),
+            },
+          },
+          include: { items: { include: { modifiers: true } } },
         });
+      });
+    } catch (error) {
+      if (!isRetryableCartWriteError(error) || attempt === MAX_CART_WRITE_RETRIES) {
+        throw error;
       }
 
-      await tx.cartItem.deleteMany({ where: { cartId: existingCart.id } });
-      await tx.cart.delete({ where: { id: existingCart.id } });
+      await wait(attempt * 50);
     }
+  }
 
-    return tx.cart.create({
-      data: {
-        userId,
-        restaurantId,
-        items: {
-          create: pricedItems.map((item) => ({
-            dishId: item.dishId,
-            dishName: item.dishName,
-            dishImageUrl: item.dishImageUrl,
-            unitPrice: item.unitPrice,
-            quantity: item.quantity,
-            modifiers: {
-              create: item.modifiers,
-            },
-          })),
-        },
-      },
-      include: { items: { include: { modifiers: true } } },
-    });
-  });
+  throw new Error('Failed to replace cart after retries');
 };
 
 export const updateCartItemQuantity = async (

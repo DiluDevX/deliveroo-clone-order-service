@@ -17,6 +17,7 @@ import {
 } from '../dtos/order.dto';
 import { paymentService } from './payment.service';
 import dayjs from 'dayjs';
+import { environment } from '../config/environment';
 
 type OrderWithRelations = Prisma.OrderGetPayload<{
   include: {
@@ -94,6 +95,10 @@ export const createOrderBeforePaymentIntent = async (
   }, 0);
 
   const totalAmount = subtotal + deliveryFee + serviceFee - (discountAmount ?? 0);
+  const paymentExpiresAt =
+    paymentMethod === 'card'
+      ? dayjs().add(environment.cardPaymentExpiryMinutes, 'minute').toDate()
+      : undefined;
 
   let orderNumber = generateOrderNumber();
   let retries = 0;
@@ -126,6 +131,7 @@ export const createOrderBeforePaymentIntent = async (
           paymentMethod: paymentMethod,
           paymentId,
           paymentStatus: paymentStatus,
+          paymentExpiresAt,
           items: {
             create: items.map((item) => ({
               dishId: item.dishId,
@@ -202,6 +208,29 @@ export const prepareOrderPayment = async (
 
   if (order.status === OrderStatus.CANCELLED || order.status === OrderStatus.REFUNDED) {
     throw new ConflictError('Cannot create a payment intent for this order state');
+  }
+
+  if (order.paymentExpiresAt && order.paymentExpiresAt <= new Date()) {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: OrderStatus.CANCELLED,
+        paymentStatus: PaymentStatus.CANCELLED,
+        cancelledAt: new Date(),
+        cancellationActor: ActorType.SYSTEM,
+        cancellationReason: 'Card payment window expired',
+        statusHistory: {
+          create: {
+            status: OrderStatus.CANCELLED,
+            note: 'Card payment window expired',
+            actorId: 'order-service',
+            actorType: ActorType.SYSTEM,
+          },
+        },
+      },
+    });
+
+    throw new ConflictError('Payment window expired. Please place a new order.');
   }
 
   if (

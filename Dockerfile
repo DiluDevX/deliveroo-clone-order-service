@@ -1,13 +1,16 @@
 # ─── Stage 1: Builder ────────────────────────────────────────────────────────
 FROM node:24-alpine AS builder
 
+ARG DATABASE_URL=mongodb://localhost:27017/order-service
+ENV DATABASE_URL=$DATABASE_URL
+
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
-RUN npx prisma generate
+RUN npm run prisma:generate
 RUN npm run build
 
 # ─── Stage 2: Production deps ────────────────────────────────────────────────
@@ -16,7 +19,7 @@ FROM node:24-alpine AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 # ─── Stage 3: Runner ─────────────────────────────────────────────────────────
 FROM node:24-alpine AS runner
@@ -30,10 +33,11 @@ ARG ENV=production
 ARG APP_VERSION=unknown
 ENV ENV=$ENV \
     APP_VERSION=$APP_VERSION \
-    NODE_ENV=production
+    NODE_ENV=$ENV
 
 # Production node_modules
 COPY --from=deps    --chown=app:nodejs /app/node_modules                ./node_modules
+COPY --from=builder --chown=app:nodejs /app/node_modules/.prisma         ./node_modules/.prisma
 
 # Schema — required by migrate deploy
 COPY --from=builder --chown=app:nodejs /app/prisma                      ./prisma

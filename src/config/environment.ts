@@ -36,6 +36,7 @@ interface Environment {
   restaurantServiceUrl: string;
   restaurantServiceApiKey: string;
   serviceFee: number;
+  cardPaymentExpiryMinutes: number;
 }
 
 function requireEnv(name: string): string {
@@ -138,4 +139,8 @@ export const environment: Environment = {
   restaurantServiceUrl: optionalEnv('RESTAURANT_SERVICE_URL', 'http://localhost:4004'),
   restaurantServiceApiKey: optionalEnv('RESTAURANT_SERVICE_API_KEY', ''),
   serviceFee: Number(optionalEnv('SERVICE_FEE', '0.99')),
+  cardPaymentExpiryMinutes: parsePositiveInt(
+    optionalEnv('CARD_PAYMENT_EXPIRY_MINUTES', '30'),
+    'CARD_PAYMENT_EXPIRY_MINUTES'
+  ),
 };

@@ -14,7 +14,7 @@ export const createPaymentIntent = async (
       'Creating payment intent'
     );
 
-    const response = await fetch(`${PAYMENT_SERVICE_URL}/api/v1/payments/create-intent`, {
+    const response = await fetch(`${PAYMENT_SERVICE_URL}/v1/payments/create-intent`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ export const confirmPayment = async (paymentId: string): Promise<PaymentResult> 
   try {
     logger.info({ paymentId }, 'Confirming payment');
 
-    const response = await fetch(`${PAYMENT_SERVICE_URL}/api/payments/${paymentId}/confirm`, {
+    const response = await fetch(`${PAYMENT_SERVICE_URL}/v1/payments/${paymentId}/confirm`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ export const refundPayment = async (paymentId: string, amount?: number): Promise
   try {
     logger.info({ paymentId, amount }, 'Processing refund');
 
-    const response = await fetch(`${PAYMENT_SERVICE_URL}/api/payments/${paymentId}/refund`, {
+    const response = await fetch(`${PAYMENT_SERVICE_URL}/v1/payments/${paymentId}/refund`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ export const refundPayment = async (paymentId: string, amount?: number): Promise
 
 export const getPaymentStatus = async (paymentId: string): Promise<PaymentStatus | null> => {
   try {
-    const response = await fetch(`${PAYMENT_SERVICE_URL}/api/payments/${paymentId}`, {
+    const response = await fetch(`${PAYMENT_SERVICE_URL}/v1/payments/${paymentId}`, {
       headers: {
         'X-Api-Key': environment.paymentServiceApiKey,
       },

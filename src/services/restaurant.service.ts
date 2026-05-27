@@ -57,11 +57,11 @@ async function fetchRestaurantService<T>(path: string): Promise<T> {
 }
 
 export const getRestaurant = async (restaurantId: string): Promise<RestaurantSnapshot> => {
-  return fetchRestaurantService<RestaurantSnapshot>(`/api/v1/restaurants/${restaurantId}`);
+  return fetchRestaurantService<RestaurantSnapshot>(`/v1/restaurants/${restaurantId}`);
 };
 
 export const getDish = async (dishId: string): Promise<DishSnapshot> => {
-  return fetchRestaurantService<DishSnapshot>(`/api/v1/dishes/${dishId}`);
+  return fetchRestaurantService<DishSnapshot>(`/v1/dishes/${dishId}`);
 };
 
 export const assertDishCanBeOrdered = (dish: DishSnapshot, restaurantId: string): void => {

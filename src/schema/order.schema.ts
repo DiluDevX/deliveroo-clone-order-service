@@ -13,7 +13,14 @@ const orderStatusEnum = z.enum([
 ]);
 
 const actorTypeEnum = z.enum(['USER', 'RESTAURANT', 'DRIVER', 'SYSTEM']);
-const paymentStatusEnum = z.enum(['PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED', 'CANCELLED']);
+const paymentStatusEnum = z.enum([
+  'PENDING',
+  'PROCESSING',
+  'SUCCEEDED',
+  'FAILED',
+  'REFUNDED',
+  'CANCELLED',
+]);
 
 const orderItemModifierSchema = z.object({
   name: z.string().min(1),
