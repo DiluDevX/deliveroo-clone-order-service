@@ -148,6 +148,7 @@ jobs:
           cat > "$SERVICE_DIR/.env" <<'ORDER_SERVICE_ENV'
           ${{ secrets.ORDER_SERVICE_ENV_DEV }}
           ORDER_SERVICE_ENV
+          sed -i -E "s/^([A-Za-z_][A-Za-z0-9_]*)=['\"](.*)['\"]$/\1=\2/" "$SERVICE_DIR/.env"
           chmod 600 "$SERVICE_DIR/.env"
           if ! grep -q '^DATABASE_URL=' "$SERVICE_DIR/.env"; then
             echo "ORDER_SERVICE_ENV_DEV must include DATABASE_URL"
@@ -172,6 +173,9 @@ jobs:
 
           sleep 10
 
+          HEALTH_PORT="$(grep -E '^PORT=' "$SERVICE_DIR/.env" | cut -d= -f2- || true)"
+          HEALTH_PORT="${HEALTH_PORT:-$CONTAINER_PORT}"
+
           if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
             docker logs "$CONTAINER_NAME" --tail 100
             exit 1
@@ -183,6 +187,6 @@ jobs:
             --fail \
             --silent \
             --show-error \
-            "http://$CONTAINER_NAME:$CONTAINER_PORT/"
+            "http://$CONTAINER_NAME:$HEALTH_PORT/"
 
           docker image prune -f

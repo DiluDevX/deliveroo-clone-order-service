@@ -7,6 +7,7 @@ import { rateLimiterMiddleware } from './middleware/rate-limiter.middleware';
 import { apiKeyMiddleware } from './middleware/api-key.middleware';
 import { actorContextMiddleware } from './middleware/actor-context.middleware';
 import routes from './routes/index';
+import { healthCheck } from './controllers/common.controller';
 
 const app = express();
 
@@ -20,6 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // global rate limiter
 app.use(rateLimiterMiddleware);
+
+// Public health check for infrastructure probes.
+app.get('/', healthCheck);
 
 // API key authentication
 app.use(apiKeyMiddleware);
