@@ -16,7 +16,7 @@ import {
   UpdateCartItemRequestBodyDTO,
 } from '../../dtos/cart.dto';
 import { OrderResponseDTO } from '../../dtos/order.dto';
-import { ActorType, PaymentStatus } from '@prisma/client';
+import { ActorType, OrderStatus, PaymentStatus } from '@prisma/client';
 import * as restaurantService from '../../services/restaurant.service';
 
 export const getCart = async (
@@ -232,6 +232,10 @@ export const checkout = async (
       throw new BadRequestError(`Minimum order value is ${restaurant.minimumValue}`);
     }
 
+    const normalizedPaymentMethod = paymentMethod ?? 'cash';
+    const initialOrderStatus =
+      normalizedPaymentMethod === 'cash' ? OrderStatus.CONFIRMED : OrderStatus.PENDING;
+
     const order = await orderService.createOrderBeforePaymentIntent(
       {
         userId,
@@ -248,9 +252,10 @@ export const checkout = async (
       },
       actorId,
       actorType,
-      paymentMethod ?? 'cash',
+      normalizedPaymentMethod,
       undefined,
-      PaymentStatus.PENDING
+      PaymentStatus.PENDING,
+      initialOrderStatus
     );
 
     await cartService.clearCart(userId);

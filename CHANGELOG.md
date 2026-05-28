@@ -1,9 +1,8 @@
 # [1.0.0-beta.6](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.5...v1.0.0-beta.6) (2026-05-27)
 
-
 ### Features
 
-* trigger CI/CD pipeline ([a553de0](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/a553de03c8d4d2188ec2dabd1460067c168ddb03))
+- trigger CI/CD pipeline ([a553de0](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/a553de03c8d4d2188ec2dabd1460067c168ddb03))
 
 # [1.0.0-beta.5](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2026-05-27)
 

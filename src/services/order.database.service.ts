@@ -73,7 +73,8 @@ export const createOrderBeforePaymentIntent = async (
   actorType?: ActorType,
   paymentMethod?: string,
   paymentId?: string,
-  paymentStatus: PaymentStatus = PaymentStatus.PENDING
+  paymentStatus: PaymentStatus = PaymentStatus.PENDING,
+  initialStatus: OrderStatus = OrderStatus.PENDING
 ): Promise<OrderWithRelations> => {
   const {
     userId,
@@ -128,6 +129,7 @@ export const createOrderBeforePaymentIntent = async (
           restaurantAddress,
           estimatedDeliveryAt: estimatedDeliveryAt ? new Date(estimatedDeliveryAt) : undefined,
           promoCode,
+          status: initialStatus,
           paymentMethod: paymentMethod,
           paymentId,
           paymentStatus: paymentStatus,
@@ -154,7 +156,7 @@ export const createOrderBeforePaymentIntent = async (
           },
           statusHistory: {
             create: {
-              status: OrderStatus.PENDING,
+              status: initialStatus,
               actorId,
               actorType,
             },
