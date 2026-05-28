@@ -1,3 +1,10 @@
+# [1.0.0-beta.7](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.6...v1.0.0-beta.7) (2026-05-28)
+
+
+### Features
+
+* add initial order status handling in createOrderBeforePaymentIntent ([39708ee](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/39708ee28d344174b264bb8a9028d77059698fb5))
+
 # [1.0.0-beta.6](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.5...v1.0.0-beta.6) (2026-05-27)
 
 ### Features
