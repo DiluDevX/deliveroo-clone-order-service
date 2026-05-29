@@ -11,6 +11,7 @@ interface CommonResponse<T> {
 export interface RestaurantSnapshot {
   id: string;
   name: string;
+  address?: string | null;
   deliveryCharge: number;
   minimumValue: number;
   status: string;

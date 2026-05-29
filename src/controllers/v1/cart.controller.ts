@@ -243,7 +243,7 @@ export const checkout = async (
         items: pricedItems,
         deliveryAddress,
         restaurantName: restaurant.name,
-        restaurantAddress: '',
+        restaurantAddress: restaurant.address ?? '',
         deliveryFee,
         serviceFee,
         discountAmount,
