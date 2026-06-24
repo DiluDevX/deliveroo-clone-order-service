@@ -1,3 +1,10 @@
+# [1.0.0-beta.10](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.9...v1.0.0-beta.10) (2026-06-24)
+
+
+### Features
+
+* integrate RabbitMQ for order event publishing and add RabbitMQ configuration ([35f09fc](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/35f09fc112119dd679c521bd3a050853cee5d14d))
+
 # [1.0.0-beta.9](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.8...v1.0.0-beta.9) (2026-06-24)
 
 ### Bug Fixes
