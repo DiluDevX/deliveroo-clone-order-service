@@ -1,3 +1,10 @@
+# [1.0.0-beta.9](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.8...v1.0.0-beta.9) (2026-06-24)
+
+
+### Bug Fixes
+
+* trigger notifcation service azure deployment ([6b78370](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/6b783709a6f6216c75a9a6d0ae84e0f1e0e373b4))
+
 # [1.0.0-beta.8](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.7...v1.0.0-beta.8) (2026-05-29)
 
 ### Features
