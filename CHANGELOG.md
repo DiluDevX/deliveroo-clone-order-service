@@ -1,9 +1,8 @@
 # [1.0.0-beta.8](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.7...v1.0.0-beta.8) (2026-05-29)
 
-
 ### Features
 
-* update restaurant address handling and improve checkout process ([1d6d0ab](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/1d6d0ab25b8cc3316167be82c2c80148b3096261))
+- update restaurant address handling and improve checkout process ([1d6d0ab](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/1d6d0ab25b8cc3316167be82c2c80148b3096261))
 
 # [1.0.0-beta.7](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.6...v1.0.0-beta.7) (2026-05-28)
 
