@@ -18,6 +18,8 @@ import {
 import { OrderResponseDTO } from '../../dtos/order.dto';
 import { ActorType, OrderStatus, PaymentStatus } from '@prisma/client';
 import * as restaurantService from '../../services/restaurant.service';
+import { OrderCreatedEventData } from '../../types/event-envelope';
+import { publishEvent } from '../../messaging/event-publisher';
 
 export const getCart = async (
   req: Request<unknown, CommonResponseDTO<CartResponseDTO>>,
@@ -259,6 +261,22 @@ export const checkout = async (
     );
 
     await cartService.clearCart(userId);
+
+    const orderCreatedEvent: OrderCreatedEventData = {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      userId: order.userId,
+      restaurantId: order.restaurantId,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.paymentMethod,
+      status: order.status,
+    };
+
+    try {
+      await publishEvent('order.created', orderCreatedEvent);
+    } catch (error) {
+      logger.error({ error, orderId: order.id }, 'Failed to publish order.created event');
+    }
 
     logger.info({ userId, orderId: order.id, orderNumber: order.orderNumber }, 'order placed');
 

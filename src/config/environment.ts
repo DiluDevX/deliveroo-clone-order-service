@@ -16,6 +16,11 @@ interface RateLimitConfig {
   max: number;
 }
 
+interface RabbitMQConfig {
+  url: string;
+  exchange: string;
+}
+
 interface Environment {
   port: number;
   env: EnvironmentEnum;
@@ -37,6 +42,7 @@ interface Environment {
   restaurantServiceApiKey: string;
   serviceFee: number;
   cardPaymentExpiryMinutes: number;
+  rabbitMQ: RabbitMQConfig;
 }
 
 function requireEnv(name: string): string {
@@ -143,4 +149,8 @@ export const environment: Environment = {
     optionalEnv('CARD_PAYMENT_EXPIRY_MINUTES', '30'),
     'CARD_PAYMENT_EXPIRY_MINUTES'
   ),
+  rabbitMQ: {
+    url: optionalEnv('RABBITMQ_URL', ''),
+    exchange: optionalEnv('RABBITMQ_EXCHANGE', 'deliveroo.events'),
+  },
 };
