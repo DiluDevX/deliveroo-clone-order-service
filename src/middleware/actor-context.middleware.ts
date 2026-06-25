@@ -8,12 +8,18 @@ export interface ActorContext {
   type: ActorTypeValue;
   userId?: string;
   actorId?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export function actorContextMiddleware(req: Request, _res: Response, next: NextFunction): void {
   const userId = req.headers['x-user-id'];
   const actorType = req.headers['x-actor-type'];
   const actorId = req.headers['x-actor-id'];
+  const userEmail = req.headers['x-user-email'];
+  const userFirstName = req.headers['x-user-first-name'];
+  const userLastName = req.headers['x-user-last-name'];
 
   const type: ActorTypeValue = ACTOR_TYPE_VALUES.includes(actorType as ActorTypeValue)
     ? (actorType as ActorTypeValue)
@@ -27,6 +33,9 @@ export function actorContextMiddleware(req: Request, _res: Response, next: NextF
     type,
     userId: typeof userId === 'string' ? userId : undefined,
     actorId: typeof actorId === 'string' ? actorId : undefined,
+    email: typeof userEmail === 'string' ? userEmail : undefined,
+    firstName: typeof userFirstName === 'string' ? userFirstName : undefined,
+    lastName: typeof userLastName === 'string' ? userLastName : undefined,
   };
 
   next();

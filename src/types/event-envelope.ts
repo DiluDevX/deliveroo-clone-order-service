@@ -10,6 +10,9 @@ export interface OrderCreatedEventData {
   orderId: string;
   orderNumber: string;
   userId: string;
+  userEmail?: string;
+  userFirstName?: string;
+  userLastName?: string;
   restaurantId: string;
   totalAmount: number;
   paymentMethod: string | null;

@@ -98,6 +98,11 @@ export const preparePayment = async (
     const paymentIntent = await orderService.createOrderPaymentIntent(
       orderId,
       userId,
+      {
+        email: req.actor?.email,
+        firstName: req.actor?.firstName,
+        lastName: req.actor?.lastName,
+      },
       expectedTotalAmount
     );
 

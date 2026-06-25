@@ -267,10 +267,20 @@ export const prepareOrderPayment = async (
 export const createOrderPaymentIntent = async (
   orderId: string,
   userId: string,
+  userContact?: {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+  },
   expectedTotalAmount?: number
 ): Promise<CreateOrderPaymentIntentResponseDTO> => {
   const paymentDetails = await prepareOrderPayment(orderId, userId, expectedTotalAmount);
-  const paymentResult = await paymentService.createPaymentIntent(paymentDetails);
+  const paymentResult = await paymentService.createPaymentIntent({
+    ...paymentDetails,
+    userEmail: userContact?.email,
+    userFirstName: userContact?.firstName,
+    userLastName: userContact?.lastName,
+  });
 
   if (!paymentResult.success || !paymentResult.paymentId) {
     throw new BadRequestError(`Payment failed: ${paymentResult.error ?? 'Unknown error'}`);

@@ -24,6 +24,9 @@ export interface PaymentResult {
 export interface CreatePaymentIntentPayload {
   orderId: string;
   userId: string;
+  userEmail?: string;
+  userFirstName?: string;
+  userLastName?: string;
   restaurantId: string;
   amount: number;
   currency: 'GBP';
