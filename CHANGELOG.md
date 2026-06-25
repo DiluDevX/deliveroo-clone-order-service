@@ -1,9 +1,8 @@
 # [1.0.0-beta.12](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.11...v1.0.0-beta.12) (2026-06-25)
 
-
 ### Features
 
-* add user contact information to order processing and payment intent ([d9db4a0](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/d9db4a0d934c4fba5e9f2999671e7de107526082))
+- add user contact information to order processing and payment intent ([d9db4a0](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/d9db4a0d934c4fba5e9f2999671e7de107526082))
 
 # [1.0.0-beta.11](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.10...v1.0.0-beta.11) (2026-06-25)
 
