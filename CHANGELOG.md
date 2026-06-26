@@ -1,3 +1,10 @@
+# [1.0.0-beta.14](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.13...v1.0.0-beta.14) (2026-06-26)
+
+
+### Features
+
+* enhance order event data structure with additional fields for delivery and item details ([1fdf683](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/1fdf683bfc68c26730625bc19bf5c669d7ece795))
+
 # [1.0.0-beta.13](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.12...v1.0.0-beta.13) (2026-06-25)
 
 ### Bug Fixes
