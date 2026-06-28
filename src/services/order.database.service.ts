@@ -41,6 +41,20 @@ const MAX_ORDER_NUMBER_RETRIES = 5;
 const TOTAL_MISMATCH_TOLERANCE = 0.01;
 const PLATFORM_COMMISSION_PERCENTAGE = 15;
 
+const RETRYABLE_PAYMENT_STATUSES: PaymentStatus[] = [
+  PaymentStatus.PENDING,
+  PaymentStatus.PROCESSING,
+  PaymentStatus.FAILED,
+];
+
+const canSyncPaymentStatus = (currentStatus: PaymentStatus, nextStatus: PaymentStatus): boolean => {
+  if (currentStatus === PaymentStatus.PROCESSING) {
+    return true;
+  }
+
+  return currentStatus === PaymentStatus.FAILED && nextStatus === PaymentStatus.SUCCEEDED;
+};
+
 const generateOrderNumber = (): string => {
   const date = dayjs().format('YYYYMMDD');
   const random = randomBytes(3).toString('hex').toUpperCase().substring(0, 5);
@@ -235,10 +249,7 @@ export const prepareOrderPayment = async (
     throw new ConflictError('Payment window expired. Please place a new order.');
   }
 
-  if (
-    order.paymentStatus !== PaymentStatus.PENDING &&
-    order.paymentStatus !== PaymentStatus.PROCESSING
-  ) {
+  if (!RETRYABLE_PAYMENT_STATUSES.includes(order.paymentStatus)) {
     throw new ConflictError('Order payment is not pending');
   }
 
@@ -322,7 +333,7 @@ export const syncOrderPaymentStatus = async (
     return currentOrder;
   }
 
-  if (order.paymentStatus !== PaymentStatus.PROCESSING) {
+  if (!canSyncPaymentStatus(order.paymentStatus, paymentStatus)) {
     throw new ConflictError(
       `Cannot update payment from ${order.paymentStatus} to ${paymentStatus}`
     );
