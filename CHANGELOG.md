@@ -1,3 +1,10 @@
+# [1.0.0-beta.15](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.14...v1.0.0-beta.15) (2026-06-28)
+
+
+### Features
+
+* add retryable payment statuses and sync logic for order payments ([e6639b2](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/e6639b21b5506a1e2a5b3f1e8e77a329f60a7f1a))
+
 # [1.0.0-beta.14](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.13...v1.0.0-beta.14) (2026-06-26)
 
 ### Features
