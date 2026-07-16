@@ -112,6 +112,10 @@ x-actor-restaurant-role: employee | super_admin | admin | finance
 
 Current fallback is SYSTEM when x-actor-type is missing, but cart checkout still requires x-user-id. The browser should not provide these. The BFF should derive them from auth and inject them.
 
+All cart and checkout routes require a `USER` actor. Restaurant staff and platform administrators
+cannot create or modify customer carts. Direct order creation is reserved for platform/system actors;
+customer orders must be created through server-priced cart checkout.
+
 ## Cart Routes
 
 | Method | Path                       | Body                     | Notes                                 |
@@ -205,7 +209,9 @@ Use direct order creation for admin/system use cases. Use cart checkout for the 
 
 Restaurant order, summary, and analytics routes require verified actor context. Restaurant actors
 may only access the restaurant id assigned by auth-service; platform admins may access any
-restaurant. Restaurant order status mutations also require an operational restaurant role.
+restaurant. Restaurant staff with an operational role may move orders from confirmed to preparing
+and from preparing to ready. Only the assigned driver may move a ready order to out for delivery and
+then delivered. Platform and trusted system actors retain operational override access.
 
 Dashboard and analytics revenue includes recognized orders (`CONFIRMED` through `DELIVERED`) and
 excludes pending payment attempts, cancellations, and refunds. Reporting periods currently use UTC

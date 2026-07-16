@@ -31,6 +31,7 @@ export const listOrders = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    orderAuthorizationService.assertCustomerActor(req.actor);
     const userId = req.actor?.userId;
     if (!userId) throw new UnauthorizedError('X-User-Id header is required');
 
@@ -94,6 +95,7 @@ export const preparePayment = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    orderAuthorizationService.assertCustomerActor(req.actor);
     const userId = req.actor?.userId;
     if (!userId) throw new UnauthorizedError('X-User-Id header is required');
 
@@ -161,6 +163,7 @@ export const createOrder = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    orderAuthorizationService.assertCanCreateDirectOrder(req.actor);
     const actorType = orderAuthorizationService.toStoredActorType(req.actor);
     const actorId = req.actor?.actorId ?? req.actor?.userId;
 
@@ -222,7 +225,11 @@ export const updateOrderStatus = async (
     const { status, note } = req.body;
     const existingOrder = await orderService.findOrderById(orderId);
     if (!existingOrder) throw new NotFoundError('Order not found');
-    orderAuthorizationService.assertCanManageRestaurantOrder(req.actor, existingOrder.restaurantId);
+    orderAuthorizationService.assertCanUpdateOrderStatus(
+      req.actor,
+      existingOrder,
+      status as OrderStatus
+    );
 
     const actorType = orderAuthorizationService.toStoredActorType(req.actor);
     const actorId = req.actor?.actorId ?? req.actor?.userId;
