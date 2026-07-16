@@ -1,3 +1,11 @@
+# [1.0.0-beta.16](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.15...v1.0.0-beta.16) (2026-07-16)
+
+
+### Features
+
+* add restaurant analytics and dashboard summary endpoints with authorization checks ([20ae462](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/20ae462f6150af5b03451dbdff1dcd3193267a87))
+* migrate database from PostgreSQL to MongoDB and update related schemas and services ([46d5477](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/46d54776d6c44c8256355883ccf0d8d6b123fd3a))
+
 # [1.0.0-beta.15](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.14...v1.0.0-beta.15) (2026-06-28)
 
 ### Features
