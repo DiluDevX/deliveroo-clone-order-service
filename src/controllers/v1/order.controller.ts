@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import * as orderService from '../../services/order.database.service';
+import * as orderAuthorizationService from '../../services/order-authorization.service';
+import * as restaurantReportService from '../../services/restaurant-report.service';
 import { logger } from '../../utils/logger';
 import { NotFoundError, UnauthorizedError } from '../../utils/errors';
 import { mapOrderToResponse } from '../../utils/mappers';
@@ -15,6 +17,8 @@ import {
   OrderIdParamsDTO,
   PreparePaymentRequestBodyDTO,
   OrderResponseDTO,
+  RestaurantAnalyticsResponseDTO,
+  RestaurantDashboardSummaryResponseDTO,
   RestaurantIdParamsDTO,
   UpdatePaymentStatusRequestBodyDTO,
   UpdateOrderStatusRequestBodyDTO,
@@ -65,6 +69,7 @@ export const getOrder = async (
     const order = await orderService.findOrderById(orderId);
 
     if (!order) throw new NotFoundError('Order not found');
+    orderAuthorizationService.assertCanViewOrder(req.actor, order);
 
     logger.info({ orderId }, 'order fetched');
 
@@ -156,7 +161,7 @@ export const createOrder = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const actorType = req.actor?.type;
+    const actorType = orderAuthorizationService.toStoredActorType(req.actor);
     const actorId = req.actor?.actorId ?? req.actor?.userId;
 
     const order = await orderService.createOrder(req.body, actorId, actorType);
@@ -181,7 +186,11 @@ export const cancelOrder = async (
 ): Promise<void> => {
   try {
     const { orderId } = req.params;
-    const actorType = req.actor?.type;
+    const existingOrder = await orderService.findOrderById(orderId);
+    if (!existingOrder) throw new NotFoundError('Order not found');
+    orderAuthorizationService.assertCanCancelOrder(req.actor, existingOrder);
+
+    const actorType = orderAuthorizationService.toStoredActorType(req.actor);
     const actorId = req.actor?.actorId ?? req.actor?.userId;
 
     const order = await orderService.cancelOrder(orderId, req.body.reason, actorId, actorType);
@@ -211,7 +220,11 @@ export const updateOrderStatus = async (
   try {
     const { orderId } = req.params;
     const { status, note } = req.body;
-    const actorType = req.actor?.type;
+    const existingOrder = await orderService.findOrderById(orderId);
+    if (!existingOrder) throw new NotFoundError('Order not found');
+    orderAuthorizationService.assertCanManageRestaurantOrder(req.actor, existingOrder.restaurantId);
+
+    const actorType = orderAuthorizationService.toStoredActorType(req.actor);
     const actorId = req.actor?.actorId ?? req.actor?.userId;
 
     const order = await orderService.updateOrderStatus(
@@ -243,7 +256,11 @@ export const assignDriver = async (
   try {
     const { orderId } = req.params;
     const { driverId } = req.body;
-    const actorType = req.actor?.type;
+    const existingOrder = await orderService.findOrderById(orderId);
+    if (!existingOrder) throw new NotFoundError('Order not found');
+    orderAuthorizationService.assertCanManageRestaurantOrder(req.actor, existingOrder.restaurantId);
+
+    const actorType = orderAuthorizationService.toStoredActorType(req.actor);
     const actorId = req.actor?.actorId ?? req.actor?.userId;
 
     const order = await orderService.assignDriver(orderId, driverId, actorId, actorType);
@@ -273,6 +290,7 @@ export const listOrdersByRestaurant = async (
 ): Promise<void> => {
   try {
     const { restaurantId } = req.params;
+    orderAuthorizationService.assertCanAccessRestaurant(req.actor, restaurantId);
     const query = req.query;
     const parsedPage = query.page ? Number.parseInt(query.page, 10) : 1;
     const parsedLimit = query.limit ? Number.parseInt(query.limit, 10) : 20;
@@ -294,6 +312,59 @@ export const listOrdersByRestaurant = async (
     });
   } catch (error) {
     logger.error(error, 'list restaurant orders error');
+    next(error);
+  }
+};
+
+export const getRestaurantDashboardSummary = async (
+  req: Request<RestaurantIdParamsDTO, CommonResponseDTO<RestaurantDashboardSummaryResponseDTO>>,
+  res: Response<CommonResponseDTO<RestaurantDashboardSummaryResponseDTO>>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { restaurantId } = req.params;
+    orderAuthorizationService.assertCanAccessRestaurant(req.actor, restaurantId);
+
+    const summary = await restaurantReportService.getRestaurantDashboardSummary(restaurantId);
+
+    logger.info({ restaurantId }, 'restaurant dashboard summary generated');
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Restaurant dashboard summary retrieved successfully',
+      data: {
+        ...summary,
+        recentOrders: summary.recentOrders.map(
+          (order) => mapOrderToResponse(order) as OrderResponseDTO
+        ),
+      },
+    });
+  } catch (error) {
+    logger.error(error, 'get restaurant dashboard summary error');
+    next(error);
+  }
+};
+
+export const getRestaurantAnalytics = async (
+  req: Request<RestaurantIdParamsDTO, CommonResponseDTO<RestaurantAnalyticsResponseDTO>>,
+  res: Response<CommonResponseDTO<RestaurantAnalyticsResponseDTO>>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { restaurantId } = req.params;
+    orderAuthorizationService.assertCanAccessRestaurant(req.actor, restaurantId);
+
+    const analytics = await restaurantReportService.getRestaurantAnalytics(restaurantId);
+
+    logger.info({ restaurantId }, 'restaurant analytics generated');
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Restaurant analytics retrieved successfully',
+      data: analytics,
+    });
+  } catch (error) {
+    logger.error(error, 'get restaurant analytics error');
     next(error);
   }
 };

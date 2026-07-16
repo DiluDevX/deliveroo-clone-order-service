@@ -17,6 +17,7 @@ import {
 } from '../../dtos/cart.dto';
 import { OrderResponseDTO } from '../../dtos/order.dto';
 import { ActorType, OrderStatus, PaymentStatus } from '@prisma/client';
+import { toStoredActorType } from '../../services/order-authorization.service';
 import * as restaurantService from '../../services/restaurant.service';
 import { OrderCreatedEventData } from '../../types/event-envelope';
 import { publishEvent } from '../../messaging/event-publisher';
@@ -193,7 +194,7 @@ export const checkout = async (
     const { deliveryAddress, discountAmount, promoCode, estimatedDeliveryAt, paymentMethod } =
       req.body;
 
-    const actorType = req.actor?.type as ActorType;
+    const actorType: ActorType = toStoredActorType(req.actor);
     const actorId = req.actor?.actorId ?? userId;
 
     const restaurant = await restaurantService.getRestaurant(cart.restaurantId);

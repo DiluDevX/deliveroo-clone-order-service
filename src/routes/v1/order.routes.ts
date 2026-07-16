@@ -4,6 +4,8 @@ import {
   cancelOrder,
   createOrder,
   getOrder,
+  getRestaurantAnalytics,
+  getRestaurantDashboardSummary,
   listOrders,
   listOrdersByDriver,
   listOrdersByRestaurant,
@@ -26,6 +28,18 @@ import {
 } from '../../schema/order.schema';
 
 const router = Router();
+
+router.get(
+  '/restaurant/:restaurantId/summary',
+  validateParams(restaurantIdParamsSchema),
+  getRestaurantDashboardSummary
+);
+
+router.get(
+  '/restaurant/:restaurantId/analytics',
+  validateParams(restaurantIdParamsSchema),
+  getRestaurantAnalytics
+);
 
 router.get(
   '/restaurant/:restaurantId',
