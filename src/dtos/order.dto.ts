@@ -130,3 +130,60 @@ export interface CreateOrderPaymentIntentResponseDTO {
   status: string;
   clientSecret?: string | null;
 }
+
+export interface ReportTrendPointDTO {
+  label: string;
+  periodStart: string;
+  revenue: number;
+  orders: number;
+}
+
+export interface TopItemReportDTO {
+  dishId: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+}
+
+export interface RestaurantDashboardSummaryResponseDTO {
+  timezone: 'UTC';
+  generatedAt: string;
+  todaySales: number;
+  todayOrders: number;
+  salesChangePercent: number | null;
+  activeOrders: number;
+  averageOrderValue: number;
+  totalCustomers: number;
+  weeklyTrend: ReportTrendPointDTO[];
+  topItems: TopItemReportDTO[];
+  recentOrders: OrderResponseDTO[];
+}
+
+export interface CategoryReportDTO {
+  categoryId: string;
+  quantity: number;
+  percentage: number;
+}
+
+export interface PeakHourReportDTO {
+  hour: string;
+  orders: number;
+}
+
+export interface RestaurantAnalyticsResponseDTO {
+  timezone: 'UTC';
+  generatedAt: string;
+  currentMonth: {
+    revenue: number;
+    orders: number;
+    averageOrderValue: number;
+    uniqueCustomers: number;
+    revenueChangePercent: number | null;
+    ordersChangePercent: number | null;
+    averageOrderValueChangePercent: number | null;
+  };
+  weeklyTrend: ReportTrendPointDTO[];
+  monthlyTrend: ReportTrendPointDTO[];
+  categoryBreakdown: CategoryReportDTO[];
+  peakHours: PeakHourReportDTO[];
+}

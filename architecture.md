@@ -185,20 +185,30 @@ Important: paymentMethod currently must be `card` or `cash`. The frontend and pa
 
 ## Order Routes
 
-| Method | Path                                | Purpose                                  |
-| ------ | ----------------------------------- | ---------------------------------------- |
-| GET    | /v1/orders/                         | List orders with filters                 |
-| GET    | /v1/orders/:orderId                 | Get one order                            |
-| POST   | /v1/orders/                         | Create order directly                    |
-| GET    | /v1/orders/restaurant/:restaurantId | List by restaurant                       |
-| GET    | /v1/orders/driver/:driverId         | List by driver                           |
-| PATCH  | /v1/orders/:orderId/cancel          | Cancel order                             |
-| PATCH  | /v1/orders/:orderId/status          | Update order status                      |
-| PATCH  | /v1/orders/:orderId/assign-driver   | Assign driver                            |
-| POST   | /v1/orders/:orderId/prepare-payment | Validate order and create payment intent |
-| POST   | /v1/orders/:orderId/payment-status  | Sync payment status from payment service |
+| Method | Path                                          | Purpose                                  |
+| ------ | --------------------------------------------- | ---------------------------------------- |
+| GET    | /v1/orders/                                   | List orders with filters                 |
+| GET    | /v1/orders/:orderId                           | Get one order                            |
+| POST   | /v1/orders/                                   | Create order directly                    |
+| GET    | /v1/orders/restaurant/:restaurantId           | List by restaurant                       |
+| GET    | /v1/orders/restaurant/:restaurantId/summary   | Restaurant dashboard summary             |
+| GET    | /v1/orders/restaurant/:restaurantId/analytics | Six-month restaurant analytics           |
+| GET    | /v1/orders/driver/:driverId                   | List by driver                           |
+| PATCH  | /v1/orders/:orderId/cancel                    | Cancel order                             |
+| PATCH  | /v1/orders/:orderId/status                    | Update order status                      |
+| PATCH  | /v1/orders/:orderId/assign-driver             | Assign driver                            |
+| POST   | /v1/orders/:orderId/prepare-payment           | Validate order and create payment intent |
+| POST   | /v1/orders/:orderId/payment-status            | Sync payment status from payment service |
 
 Use direct order creation for admin/system use cases. Use cart checkout for the customer app.
+
+Restaurant order, summary, and analytics routes require verified actor context. Restaurant actors
+may only access the restaurant id assigned by auth-service; platform admins may access any
+restaurant. Restaurant order status mutations also require an operational restaurant role.
+
+Dashboard and analytics revenue includes recognized orders (`CONFIRMED` through `DELIVERED`) and
+excludes pending payment attempts, cancellations, and refunds. Reporting periods currently use UTC
+because restaurant timezone data is not yet stored.
 
 ## Checkout Flow Inside Service
 
