@@ -4,10 +4,8 @@ import { ForbiddenError, UnauthorizedError } from '../utils/errors';
 
 const ORDER_MANAGER_ROLES: RestaurantActorRole[] = ['employee', 'super_admin', 'admin'];
 
-const isRestaurantOwner = (actor: ActorContext, restaurantId: string): boolean =>
-  actor.type === 'RESTAURANT' &&
-  actor.restaurantId === restaurantId &&
-  actor.actorId === restaurantId;
+const isRestaurantActor = (actor: ActorContext, restaurantId: string): boolean =>
+  actor.type === 'RESTAURANT' && actor.restaurantId === restaurantId;
 
 export const assertCanAccessRestaurant = (
   actor: ActorContext | undefined,
@@ -21,7 +19,7 @@ export const assertCanAccessRestaurant = (
     return;
   }
 
-  if (!isRestaurantOwner(actor, restaurantId)) {
+  if (!isRestaurantActor(actor, restaurantId)) {
     throw new ForbiddenError('You do not have permission to access this restaurant');
   }
 };
@@ -58,7 +56,7 @@ export const assertCanViewOrder = (actor: ActorContext | undefined, order: Order
     return;
   }
 
-  if (isRestaurantOwner(actor, order.restaurantId)) {
+  if (isRestaurantActor(actor, order.restaurantId)) {
     return;
   }
 

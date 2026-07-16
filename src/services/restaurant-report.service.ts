@@ -121,10 +121,11 @@ export const getRestaurantDashboardSummary = async (
 ): Promise<RestaurantDashboardSummaryResult> => {
   const now = dayjs.utc();
   const reportStart = now.startOf('day').subtract(29, 'day');
-  const [orders, activeOrders, totalCustomers, recentOrders] = await Promise.all([
-    findRecognizedOrders(restaurantId, reportStart.toDate(), now.endOf('day').toDate()),
+  const reportEnd = now.endOf('day');
+  const [orders, activeOrders, customersLast30Days, recentOrders] = await Promise.all([
+    findRecognizedOrders(restaurantId, reportStart.toDate(), reportEnd.toDate()),
     countActiveOrders(restaurantId),
-    countRecognizedCustomers(restaurantId),
+    countRecognizedCustomers(restaurantId, reportStart.toDate(), reportEnd.toDate()),
     findRecentOrders(restaurantId, 5),
   ]);
 
@@ -148,7 +149,7 @@ export const getRestaurantDashboardSummary = async (
     salesChangePercent: percentageChange(todaySales, yesterdaySales),
     activeOrders,
     averageOrderValue: todayOrders.length > 0 ? roundMoney(todaySales / todayOrders.length) : 0,
-    totalCustomers,
+    customersLast30Days,
     weeklyTrend: buildDailyTrend(weeklyOrders, weekStart, 7),
     topItems: buildTopItems(orders),
     recentOrders,

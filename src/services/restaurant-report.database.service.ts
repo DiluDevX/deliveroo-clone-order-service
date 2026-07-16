@@ -72,11 +72,16 @@ export const countActiveOrders = async (restaurantId: string): Promise<number> =
     },
   });
 
-export const countRecognizedCustomers = async (restaurantId: string): Promise<number> => {
+export const countRecognizedCustomers = async (
+  restaurantId: string,
+  from: Date,
+  to: Date
+): Promise<number> => {
   const customers = await prisma.order.findMany({
     where: {
       restaurantId,
       status: { in: RECOGNIZED_ORDER_STATUSES },
+      createdAt: { gte: from, lte: to },
     },
     distinct: ['userId'],
     select: { userId: true },

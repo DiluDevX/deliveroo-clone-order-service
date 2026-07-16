@@ -153,7 +153,7 @@ export interface RestaurantDashboardSummaryResponseDTO {
   salesChangePercent: number | null;
   activeOrders: number;
   averageOrderValue: number;
-  totalCustomers: number;
+  customersLast30Days: number;
   weeklyTrend: ReportTrendPointDTO[];
   topItems: TopItemReportDTO[];
   recentOrders: OrderResponseDTO[];

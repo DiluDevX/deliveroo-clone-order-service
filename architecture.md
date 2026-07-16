@@ -9,7 +9,7 @@ The order service owns carts, cart items, order creation, order payment state, o
 - Runtime: Node.js >= 24
 - Framework: Express 5
 - Language: TypeScript
-- Database: PostgreSQL via Prisma
+- Database: MongoDB via Prisma
 - Default local port in .env.example: 3000, but recommended system port is 4002
 - Entry point: src/server.ts
 
@@ -19,7 +19,7 @@ The order service owns carts, cart items, order creation, order payment state, o
 npm install
 cp .env.example .env
 npm run prisma:generate
-npm run prisma:migrate
+npm run prisma:push
 npm run dev
 ```
 
@@ -44,7 +44,7 @@ npm run format:check
 PORT=4002
 NODE_ENV=development
 SERVICE_NAME=deliveroo-clone-order-service
-DATABASE_URL=postgresql://user:password@localhost:5432/order_service_db
+DATABASE_URL=mongodb://localhost:27017/order_service
 BFF_API_KEY=shared-order-service-key
 LOG_LEVEL=info
 APP_VERSION=1.0.0
@@ -77,8 +77,7 @@ Commands:
 
 ```bash
 npm run prisma:generate
-npm run prisma:migrate:new
-npm run prisma:migrate
+npm run prisma:push
 npm run prisma:studio
 ```
 
@@ -106,7 +105,9 @@ Optional but recommended:
 ```http
 x-actor-id: <authenticated actor id>
 x-actor-user-id: <authenticated user id>
-x-actor-type: USER | RESTAURANT | DRIVER | SYSTEM
+x-actor-type: USER | RESTAURANT | DRIVER | SYSTEM | PLATFORM_ADMIN
+x-actor-restaurant-id: <verified restaurant assignment for restaurant actors>
+x-actor-restaurant-role: employee | super_admin | admin | finance
 ```
 
 Current fallback is SYSTEM when x-actor-type is missing, but cart checkout still requires x-user-id. The browser should not provide these. The BFF should derive them from auth and inject them.
@@ -208,7 +209,9 @@ restaurant. Restaurant order status mutations also require an operational restau
 
 Dashboard and analytics revenue includes recognized orders (`CONFIRMED` through `DELIVERED`) and
 excludes pending payment attempts, cancellations, and refunds. Reporting periods currently use UTC
-because restaurant timezone data is not yet stored.
+because restaurant timezone data is not yet stored. Dashboard customer counts are unique recognized
+customers from the latest 30-day reporting window. Compound order indexes support restaurant/date
+and restaurant/status/date reporting queries; run `npm run prisma:push` after schema changes.
 
 ## Checkout Flow Inside Service
 
