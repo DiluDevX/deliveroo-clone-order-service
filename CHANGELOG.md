@@ -1,3 +1,15 @@
+# [1.0.0-beta.18](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.17...v1.0.0-beta.18) (2026-07-19)
+
+
+### Bug Fixes
+
+* add DATABASE_URL environment variable for Prisma Client generation ([d65c666](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/d65c666721ccf2d8a5bff1a925df75bd918988ff))
+
+
+### Features
+
+* enhance order authorization with specific access checks for restaurant orders and analytics ([3c9c831](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/3c9c831186346209f2c820de88ef23cfcb269b7c))
+
 # [1.0.0-beta.17](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.16...v1.0.0-beta.17) (2026-07-16)
 
 ### Bug Fixes
