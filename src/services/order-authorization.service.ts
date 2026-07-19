@@ -3,6 +3,7 @@ import { ActorContext, RestaurantActorRole } from '../middleware/actor-context.m
 import { ForbiddenError, UnauthorizedError } from '../utils/errors';
 
 const ORDER_MANAGER_ROLES: RestaurantActorRole[] = ['employee', 'super_admin', 'admin'];
+const ANALYTICS_VIEWER_ROLES: RestaurantActorRole[] = ['finance', 'super_admin', 'admin'];
 const RESTAURANT_MANAGED_STATUSES = new Set<OrderStatus>([
   OrderStatus.PREPARING,
   OrderStatus.READY,
@@ -48,6 +49,27 @@ export const assertCanManageRestaurantOrder = (
     !ORDER_MANAGER_ROLES.includes(actor.restaurantRole)
   ) {
     throw new ForbiddenError('Your restaurant role cannot manage orders');
+  }
+};
+
+export const assertCanListRestaurantOrders = assertCanManageRestaurantOrder;
+
+export const assertCanViewRestaurantAnalytics = (
+  actor: ActorContext | undefined,
+  restaurantId: string
+): void => {
+  assertCanAccessRestaurant(actor, restaurantId);
+
+  if (actor?.type === 'PLATFORM_ADMIN') {
+    return;
+  }
+
+  if (
+    actor?.type !== 'RESTAURANT' ||
+    !actor.restaurantRole ||
+    !ANALYTICS_VIEWER_ROLES.includes(actor.restaurantRole)
+  ) {
+    throw new ForbiddenError('Your restaurant role cannot view analytics');
   }
 };
 
@@ -120,7 +142,8 @@ export const assertCanViewOrder = (actor: ActorContext | undefined, order: Order
     return;
   }
 
-  if (isRestaurantActor(actor, order.restaurantId)) {
+  if (actor.type === 'RESTAURANT' && isRestaurantActor(actor, order.restaurantId)) {
+    assertCanManageRestaurantOrder(actor, order.restaurantId);
     return;
   }
 

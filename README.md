@@ -208,6 +208,12 @@ All routes are prefixed with `/api/v1` and follow a standardized response envelo
 | PATCH  | `/api/v1/orders/:id` | Update an order   | See schema below |
 | DELETE | `/api/v1/orders/:id` | Soft-delete order | -                |
 
+Restaurant-facing access is role-scoped using verified actor headers from the
+BFF. Employees, admins, and owners can read/manage restaurant orders. Finance,
+admins, and owners can read analytics. All assigned restaurant roles can load
+the dashboard summary. The order service enforces these rules even when called
+without the BFF.
+
 ### Carts
 
 | Method | Path                          | Description      | Body             |
