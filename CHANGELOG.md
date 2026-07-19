@@ -1,14 +1,12 @@
 # [1.0.0-beta.17](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.16...v1.0.0-beta.17) (2026-07-16)
 
-
 ### Bug Fixes
 
-* trigger azure deployment ([0fce794](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/0fce794f3fbc3c51f11e35f02f589845885d608d))
-
+- trigger azure deployment ([0fce794](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/0fce794f3fbc3c51f11e35f02f589845885d608d))
 
 ### Features
 
-* implement customer actor middleware and enhance order authorization checks ([cd524fe](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/cd524fe8782b7e531218f96cc63cac95cc0e5b45))
+- implement customer actor middleware and enhance order authorization checks ([cd524fe](https://github.com/DiluDevX/deliveroo-clone-order-service/commit/cd524fe8782b7e531218f96cc63cac95cc0e5b45))
 
 # [1.0.0-beta.16](https://github.com/DiluDevX/deliveroo-clone-order-service/compare/v1.0.0-beta.15...v1.0.0-beta.16) (2026-07-16)
 

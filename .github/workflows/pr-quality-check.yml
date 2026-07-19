@@ -46,6 +46,8 @@ jobs:
 
       - name: Generate Prisma Client
         if: matrix.check.name == 'Types' || matrix.check.name == 'Build'
+        env:
+          DATABASE_URL: mongodb://localhost:27017/order-service
         run: npm run prisma:generate
 
       - name: Run ${{ matrix.check.name }} check

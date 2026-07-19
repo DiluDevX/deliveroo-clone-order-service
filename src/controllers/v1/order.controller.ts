@@ -297,7 +297,7 @@ export const listOrdersByRestaurant = async (
 ): Promise<void> => {
   try {
     const { restaurantId } = req.params;
-    orderAuthorizationService.assertCanAccessRestaurant(req.actor, restaurantId);
+    orderAuthorizationService.assertCanListRestaurantOrders(req.actor, restaurantId);
     const query = req.query;
     const parsedPage = query.page ? Number.parseInt(query.page, 10) : 1;
     const parsedLimit = query.limit ? Number.parseInt(query.limit, 10) : 20;
@@ -359,7 +359,7 @@ export const getRestaurantAnalytics = async (
 ): Promise<void> => {
   try {
     const { restaurantId } = req.params;
-    orderAuthorizationService.assertCanAccessRestaurant(req.actor, restaurantId);
+    orderAuthorizationService.assertCanViewRestaurantAnalytics(req.actor, restaurantId);
 
     const analytics = await restaurantReportService.getRestaurantAnalytics(restaurantId);
 
