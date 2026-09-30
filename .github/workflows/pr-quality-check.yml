@@ -29,7 +29,11 @@ jobs:
           - name: Types
             command: npm run types:check
           - name: Build
-            command: npm run build:check
+            command: npm run build
+          - name: Test
+            command: npm run test:run
+          - name: Test Types
+            command: npm run test:types
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -45,7 +49,7 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma Client
-        if: matrix.check.name == 'Types' || matrix.check.name == 'Build'
+        if: matrix.check.name == 'Types' || matrix.check.name == 'Build' || matrix.check.name == 'Test' || matrix.check.name == 'Test Types'
         env:
           DATABASE_URL: mongodb://localhost:27017/order-service
         run: npm run prisma:generate

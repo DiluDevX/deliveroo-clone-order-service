@@ -47,14 +47,9 @@ export const deliveryAddressSchema = z.object({
   label: z.string().optional(),
 });
 
-export const checkoutRequestBodySchema = z.object({
-  deliveryAddress: deliveryAddressSchema,
-  restaurantName: z.string().min(1, 'restaurantName is required').optional(),
-  restaurantAddress: z.string().min(1, 'restaurantAddress is required').optional(),
-  deliveryFee: z.number().min(0).optional(),
-  serviceFee: z.number().min(0).optional(),
-  discountAmount: z.number().min(0).optional().default(0),
-  promoCode: z.string().optional(),
-  estimatedDeliveryAt: z.string().datetime().optional(),
-  paymentMethod: z.enum(['card', 'cash']).optional().default('card'),
-});
+export const checkoutRequestBodySchema = z
+  .object({
+    deliveryAddress: deliveryAddressSchema,
+    paymentMethod: z.enum(['card', 'cash']).optional().default('card'),
+  })
+  .strict();

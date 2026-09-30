@@ -100,16 +100,50 @@ export const createOrderBeforePaymentIntent = async (
     deliveryFee,
     serviceFee,
     discountAmount,
-    promoCode,
     estimatedDeliveryAt,
   } = data;
+
+  if (
+    (discountAmount !== undefined && discountAmount !== 0) ||
+    ('promoCode' in data && data.promoCode !== undefined)
+  ) {
+    throw new BadRequestError('Discounts and promo codes are not currently supported');
+  }
+
+  if (
+    !Number.isFinite(deliveryFee) ||
+    deliveryFee < 0 ||
+    !Number.isFinite(serviceFee) ||
+    serviceFee < 0 ||
+    items.length === 0 ||
+    items.some(
+      (item) =>
+        !Number.isFinite(item.unitPrice) ||
+        item.unitPrice < 0 ||
+        !Number.isSafeInteger(item.quantity) ||
+        item.quantity <= 0 ||
+        item.modifiers.some(
+          (modifier) => !Number.isFinite(modifier.extraPrice) || modifier.extraPrice < 0
+        )
+    )
+  ) {
+    throw new BadRequestError('Order prices and quantities must be valid nonnegative amounts');
+  }
 
   const subtotal = items.reduce((sum, item) => {
     const modifiersTotal = item.modifiers.reduce((ms, m) => ms + m.extraPrice, 0);
     return sum + (item.unitPrice + modifiersTotal) * item.quantity;
   }, 0);
 
-  const totalAmount = subtotal + deliveryFee + serviceFee - (discountAmount ?? 0);
+  const totalAmount = subtotal + deliveryFee + serviceFee;
+  if (
+    !Number.isFinite(subtotal) ||
+    subtotal < 0 ||
+    !Number.isFinite(totalAmount) ||
+    totalAmount < deliveryFee + serviceFee
+  ) {
+    throw new BadRequestError('Order total must be a finite nonnegative amount');
+  }
   const paymentExpiresAt =
     paymentMethod === 'card'
       ? dayjs().add(environment.cardPaymentExpiryMinutes, 'minute').toDate()
@@ -142,7 +176,6 @@ export const createOrderBeforePaymentIntent = async (
           restaurantName,
           restaurantAddress,
           estimatedDeliveryAt: estimatedDeliveryAt ? new Date(estimatedDeliveryAt) : undefined,
-          promoCode,
           status: initialStatus,
           paymentMethod: paymentMethod,
           paymentId,

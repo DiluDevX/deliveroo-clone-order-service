@@ -191,8 +191,7 @@ export const checkout = async (
       throw new BadRequestError('Cart is empty or does not exist');
     }
 
-    const { deliveryAddress, discountAmount, promoCode, estimatedDeliveryAt, paymentMethod } =
-      req.body;
+    const { deliveryAddress, paymentMethod } = req.body;
 
     const actorType: ActorType = toStoredActorType(req.actor);
     const actorId = req.actor?.actorId ?? userId;
@@ -249,9 +248,7 @@ export const checkout = async (
         restaurantAddress: restaurant.address ?? '',
         deliveryFee,
         serviceFee,
-        discountAmount,
-        promoCode,
-        estimatedDeliveryAt,
+        discountAmount: 0,
       },
       actorId,
       actorType,
