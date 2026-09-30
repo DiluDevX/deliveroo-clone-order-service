@@ -1,10 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
+import { UnauthorizedError } from '../utils/errors';
 
 const ACTOR_TYPE_VALUES = ['USER', 'RESTAURANT', 'DRIVER', 'SYSTEM', 'PLATFORM_ADMIN'] as const;
 type ActorTypeValue = (typeof ACTOR_TYPE_VALUES)[number];
 const RESTAURANT_ROLE_VALUES = ['employee', 'super_admin', 'admin', 'finance'] as const;
 export type RestaurantActorRole = (typeof RESTAURANT_ROLE_VALUES)[number];
+
+const isActorType = (value: string | string[] | undefined): value is ActorTypeValue =>
+  typeof value === 'string' && ACTOR_TYPE_VALUES.some((type) => type === value);
+
+const isRestaurantRole = (value: string | string[] | undefined): value is RestaurantActorRole =>
+  typeof value === 'string' && RESTAURANT_ROLE_VALUES.some((role) => role === value);
 
 export interface ActorContext {
   type: ActorTypeValue;
@@ -27,24 +34,18 @@ export function actorContextMiddleware(req: Request, _res: Response, next: NextF
   const userFirstName = req.headers['x-user-first-name'];
   const userLastName = req.headers['x-user-last-name'];
 
-  const type: ActorTypeValue = ACTOR_TYPE_VALUES.includes(actorType as ActorTypeValue)
-    ? (actorType as ActorTypeValue)
-    : 'SYSTEM';
-
-  if (!ACTOR_TYPE_VALUES.includes(actorType as ActorTypeValue)) {
-    logger.warn({ actorType }, 'Unknown or missing X-Actor-Type header, defaulting to SYSTEM');
+  if (!isActorType(actorType)) {
+    logger.warn({ actorType }, 'Invalid or missing X-Actor-Type header');
+    next(new UnauthorizedError('Valid X-Actor-Type header is required'));
+    return;
   }
 
   req.actor = {
-    type,
+    type: actorType,
     userId: typeof userId === 'string' ? userId : undefined,
     actorId: typeof actorId === 'string' ? actorId : undefined,
     restaurantId: typeof restaurantId === 'string' ? restaurantId : undefined,
-    restaurantRole:
-      typeof restaurantRole === 'string' &&
-      RESTAURANT_ROLE_VALUES.includes(restaurantRole as RestaurantActorRole)
-        ? (restaurantRole as RestaurantActorRole)
-        : undefined,
+    restaurantRole: isRestaurantRole(restaurantRole) ? restaurantRole : undefined,
     email: typeof userEmail === 'string' ? userEmail : undefined,
     firstName: typeof userFirstName === 'string' ? userFirstName : undefined,
     lastName: typeof userLastName === 'string' ? userLastName : undefined,
