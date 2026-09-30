@@ -38,19 +38,20 @@ const orderItemSchema = z.object({
   modifiers: z.array(orderItemModifierSchema).optional().default([]),
 });
 
-export const createOrderRequestBodySchema = z.object({
-  userId: z.string().min(1, 'userId is required'),
-  restaurantId: z.string().min(1, 'restaurantId is required'),
-  items: z.array(orderItemSchema).min(1, 'At least one item is required'),
-  deliveryAddress: deliveryAddressSchema,
-  restaurantName: z.string().min(1, 'restaurantName is required'),
-  restaurantAddress: z.string().min(1, 'restaurantAddress is required'),
-  deliveryFee: z.number().min(0),
-  serviceFee: z.number().min(0),
-  discountAmount: z.number().min(0).optional().default(0),
-  promoCode: z.string().optional(),
-  estimatedDeliveryAt: z.string().datetime().optional(),
-});
+export const createOrderRequestBodySchema = z
+  .object({
+    userId: z.string().min(1, 'userId is required'),
+    restaurantId: z.string().min(1, 'restaurantId is required'),
+    items: z.array(orderItemSchema).min(1, 'At least one item is required'),
+    deliveryAddress: deliveryAddressSchema,
+    restaurantName: z.string().min(1, 'restaurantName is required'),
+    restaurantAddress: z.string().min(1, 'restaurantAddress is required'),
+    deliveryFee: z.number().min(0),
+    serviceFee: z.number().min(0),
+    discountAmount: z.literal(0).optional().default(0),
+    estimatedDeliveryAt: z.string().datetime().optional(),
+  })
+  .strict();
 
 export const updateOrderStatusRequestBodySchema = z.object({
   status: orderStatusEnum,

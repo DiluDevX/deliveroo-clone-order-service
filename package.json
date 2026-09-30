@@ -15,14 +15,16 @@
     "start:production": "node dist/server.js",
     "format:check": "prettier --check .",
     "format:fix": "prettier --write .",
-    "lint:check": "eslint src",
-    "lint:fix": "eslint --fix src",
+    "lint:check": "eslint src tests",
+    "lint:fix": "eslint --fix src tests",
     "prisma:generate": "prisma generate",
     "prisma:migrate:new": "prisma migrate dev",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:push": "prisma db push",
     "types:check": "tsc --noEmit",
+    "test:run": "vitest run",
+    "test:types": "tsc --project tsconfig.test.json --noEmit",
     "prepare": "husky"
   },
   "keywords": [
@@ -74,6 +76,7 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^5.0.3"
   }
 }
