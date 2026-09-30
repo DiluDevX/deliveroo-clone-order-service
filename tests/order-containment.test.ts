@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import express from 'express';
 import type { Server } from 'node:http';
 import { AddressInfo } from 'node:net';
@@ -231,6 +231,11 @@ describe('checkout HTTP boundary', () => {
 });
 
 describe('direct order and shared service guard', () => {
+  it('keeps the order creation DTO discount literal and excludes promo codes', () => {
+    expectTypeOf<CreateOrderRequestBodyDTO['discountAmount']>().toEqualTypeOf<0>();
+    expectTypeOf<Extract<keyof CreateOrderRequestBodyDTO, 'promoCode'>>().toEqualTypeOf<never>();
+  });
+
   it('rejects a nonzero direct-order discount before persistence', async () => {
     const response = await post('/orders', { ...directBody, discountAmount: 24 });
     expect(response.status).toBe(400);
@@ -272,8 +277,9 @@ describe('direct order and shared service guard', () => {
     },
     { ...directBody, items: [{ ...directBody.items[0], unitPrice: 1e308, quantity: 2 }] },
   ])('blocks unsafe service input before Prisma writes: %#', async (input) => {
+    // Reflect.apply models internal or untyped callers that bypass the DTO at compile time.
     await expect(
-      createOrderBeforePaymentIntent(input, 'user-1', ActorType.USER)
+      Reflect.apply(createOrderBeforePaymentIntent, undefined, [input, 'user-1', ActorType.USER])
     ).rejects.toMatchObject({ statusCode: 400 });
     expect(mocks.orderCreate).not.toHaveBeenCalled();
     expect(mocks.createPaymentIntent).not.toHaveBeenCalled();

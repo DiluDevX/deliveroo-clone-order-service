@@ -66,13 +66,8 @@ const orderInclude = {
   statusHistory: true,
 } as const;
 
-type OrderCreationInput = Omit<CreateOrderRequestBodyDTO, 'discountAmount'> & {
-  discountAmount?: number;
-  promoCode?: string;
-};
-
 export const createOrder = async (
-  data: OrderCreationInput,
+  data: CreateOrderRequestBodyDTO,
   actorId?: string,
   actorType?: ActorType
 ): Promise<OrderWithRelations> => {
@@ -87,7 +82,7 @@ export const createOrder = async (
 };
 
 export const createOrderBeforePaymentIntent = async (
-  data: OrderCreationInput,
+  data: CreateOrderRequestBodyDTO,
   actorId?: string,
   actorType?: ActorType,
   paymentMethod?: string,
@@ -108,7 +103,10 @@ export const createOrderBeforePaymentIntent = async (
     estimatedDeliveryAt,
   } = data;
 
-  if ((discountAmount !== undefined && discountAmount !== 0) || data.promoCode !== undefined) {
+  if (
+    (discountAmount !== undefined && discountAmount !== 0) ||
+    ('promoCode' in data && data.promoCode !== undefined)
+  ) {
     throw new BadRequestError('Discounts and promo codes are not currently supported');
   }
 
