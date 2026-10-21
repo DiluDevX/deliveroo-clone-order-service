@@ -38,6 +38,7 @@ interface Environment {
 
   paymentServiceUrl: string;
   paymentServiceApiKey: string;
+  paymentCallbackSecret: string;
   restaurantServiceUrl: string;
   restaurantServiceApiKey: string;
   serviceFee: number;
@@ -55,6 +56,14 @@ function requireEnv(name: string): string {
 
 function optionalEnv(name: string, defaultValue: string): string {
   return process.env[name] || defaultValue;
+}
+
+function loadPaymentCallbackSecret(): string {
+  const secret = requireEnv('PAYMENT_CALLBACK_SECRET');
+  if (Buffer.byteLength(secret, 'utf8') < 32) {
+    throw new Error('PAYMENT_CALLBACK_SECRET must contain at least 32 bytes');
+  }
+  return secret;
 }
 
 const parsePositiveInt = (raw: string, name: string): number => {
@@ -142,6 +151,7 @@ export const environment: Environment = {
   serviceName: requireEnv('SERVICE_NAME'),
   paymentServiceUrl: optionalEnv('PAYMENT_SERVICE_URL', 'http://localhost:3001'),
   paymentServiceApiKey: optionalEnv('PAYMENT_SERVICE_API_KEY', ''),
+  paymentCallbackSecret: loadPaymentCallbackSecret(),
   restaurantServiceUrl: optionalEnv('RESTAURANT_SERVICE_URL', 'http://localhost:4004'),
   restaurantServiceApiKey: optionalEnv('RESTAURANT_SERVICE_API_KEY', ''),
   serviceFee: Number(optionalEnv('SERVICE_FEE', '0.99')),

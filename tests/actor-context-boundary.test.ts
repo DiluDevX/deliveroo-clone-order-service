@@ -170,17 +170,13 @@ describe('actor context at the API-key and router boundary', () => {
     expect(mocks.clearCart).toHaveBeenCalledExactlyOnceWith('user-1');
   });
 
-  it('accepts explicit SYSTEM for the existing payment-status caller', async () => {
+  it('rejects unsigned callbacks even with explicit SYSTEM actor', async () => {
     const response = await call('/v1/orders/order-1/payment-status', 'POST', 'SYSTEM', {
       paymentId: 'payment-1',
       paymentStatus: 'SUCCEEDED',
     });
-    expect(response.status).toBe(200);
-    expect(mocks.syncOrderPaymentStatus).toHaveBeenCalledExactlyOnceWith(
-      'order-1',
-      'payment-1',
-      'SUCCEEDED'
-    );
+    expect(response.status).toBe(401);
+    expect(mocks.syncOrderPaymentStatus).not.toHaveBeenCalled();
   });
 
   it('keeps the public health route accessible without credentials or actor headers', async () => {

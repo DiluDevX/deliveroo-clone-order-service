@@ -6,6 +6,8 @@ import { ActorType, OrderStatus, PaymentStatus } from '@prisma/client';
 
 const mocks = vi.hoisted(() => ({
   orderCreate: vi.fn(),
+  orderFindUnique: vi.fn(),
+  orderUpdate: vi.fn(),
   findCart: vi.fn(),
   clearCart: vi.fn(),
   getRestaurant: vi.fn(),
@@ -23,7 +25,13 @@ vi.mock('../src/config/environment', () => ({
   },
 }));
 vi.mock('../src/config/database', () => ({
-  prisma: { order: { create: mocks.orderCreate } },
+  prisma: {
+    order: {
+      create: mocks.orderCreate,
+      findUnique: mocks.orderFindUnique,
+      update: mocks.orderUpdate,
+    },
+  },
   isPrismaErrorWithCode: () => false,
 }));
 vi.mock('../src/utils/logger', () => ({
@@ -47,7 +55,10 @@ vi.mock('../src/utils/mappers', () => ({ mapOrderToResponse: () => ({ id: 'order
 import cartRoutes from '../src/routes/v1/cart.routes';
 import orderRoutes from '../src/routes/v1/order.routes';
 import { errorHandler } from '../src/middleware/error-handler.middleware';
-import { createOrderBeforePaymentIntent } from '../src/services/order.database.service';
+import {
+  createOrderBeforePaymentIntent,
+  syncOrderPaymentStatus,
+} from '../src/services/order.database.service';
 import type { CreateOrderRequestBodyDTO } from '../src/dtos/order.dto';
 
 const address = { line1: '1 Test St', city: 'London', postcode: 'N1', country: 'UK' };
@@ -305,5 +316,47 @@ describe('direct order and shared service guard', () => {
       subtotal: 0,
       totalAmount: 3.49,
     });
+  });
+});
+
+describe('payment synchronization regression', () => {
+  const order = {
+    id: 'order-1',
+    paymentId: 'payment-1',
+    paymentStatus: PaymentStatus.PROCESSING,
+    status: OrderStatus.PENDING,
+  };
+
+  it('confirms a pending order after payment succeeds', async () => {
+    mocks.orderFindUnique.mockResolvedValue(order);
+    mocks.orderUpdate.mockResolvedValue({ ...order, paymentStatus: PaymentStatus.SUCCEEDED });
+    await syncOrderPaymentStatus('order-1', 'payment-1', PaymentStatus.SUCCEEDED);
+    expect(mocks.orderUpdate.mock.calls[0][0].data).toMatchObject({
+      paymentStatus: PaymentStatus.SUCCEEDED,
+      status: OrderStatus.CONFIRMED,
+      statusHistory: { create: { actorId: 'payment-service', actorType: ActorType.SYSTEM } },
+    });
+  });
+
+  it('keeps duplicate callbacks idempotent', async () => {
+    mocks.orderFindUnique.mockResolvedValue({ ...order, paymentStatus: PaymentStatus.SUCCEEDED });
+    await syncOrderPaymentStatus('order-1', 'payment-1', PaymentStatus.SUCCEEDED);
+    expect(mocks.orderUpdate).not.toHaveBeenCalled();
+  });
+
+  it('rejects a different payment ID before writes', async () => {
+    mocks.orderFindUnique.mockResolvedValue(order);
+    await expect(
+      syncOrderPaymentStatus('order-1', 'payment-2', PaymentStatus.SUCCEEDED)
+    ).rejects.toMatchObject({ statusCode: 409 });
+    expect(mocks.orderUpdate).not.toHaveBeenCalled();
+  });
+
+  it('rejects a terminal status downgrade before writes', async () => {
+    mocks.orderFindUnique.mockResolvedValue({ ...order, paymentStatus: PaymentStatus.SUCCEEDED });
+    await expect(
+      syncOrderPaymentStatus('order-1', 'payment-1', PaymentStatus.PROCESSING)
+    ).rejects.toMatchObject({ statusCode: 409 });
+    expect(mocks.orderUpdate).not.toHaveBeenCalled();
   });
 });
