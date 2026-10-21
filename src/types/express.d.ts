@@ -4,6 +4,7 @@ declare global {
   namespace Express {
     interface Request {
       actor?: ActorContext;
+      rawBody?: Buffer;
     }
   }
 }

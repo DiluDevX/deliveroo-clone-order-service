@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/error-handler.middleware';
 import { rateLimiterMiddleware } from './middleware/rate-limiter.middleware';
 import { apiKeyMiddleware } from './middleware/api-key.middleware';
 import { actorContextMiddleware } from './middleware/actor-context.middleware';
+import { capturePaymentCallbackBody } from './middleware/payment-callback.middleware';
 import routes from './routes/index';
 import { healthCheck } from './controllers/common.controller';
 
@@ -14,7 +15,7 @@ const app = express();
 let isShuttingDown = false;
 
 // Parse JSON request bodies
-app.use(express.json());
+app.use(express.json({ verify: capturePaymentCallbackBody }));
 
 // Parse URL-encoded request bodies
 app.use(express.urlencoded({ extended: true }));

@@ -498,6 +498,31 @@ Detailed conventions are auto-loaded from `.claude/rules/`:
 
 ## Security Best Practices
 
+### Payment callback authentication
+
+`POST /v1/orders/:orderId/payment-status` requires `X-Payment-Callback-Token` in addition
+to the existing API key and actor headers. Unsigned or invalid callbacks return 401
+before order mutation. Gateway credentials and actor headers alone cannot authorize one.
+
+Both services require the same dedicated `PAYMENT_CALLBACK_SECRET` containing at least
+32 UTF-8 bytes; startup fails if it is missing or too short. Generate a high entropy
+random secret and configure it through the existing runtime secret manager. Keep it
+separate from API keys and user authentication secrets.
+
+The callback token is an HS256 JWT with issuer `payment-service`, audience
+`order-service`, subject equal to the URL order ID, action `payment-status`, and
+`payloadSha256` equal to the lowercase SHA-256 hex digest of the exact JSON request bytes.
+It must include integer `iat` and `exp` claims with a lifetime of at most 60 seconds.
+Expired tokens and future issuance times are rejected without clock tolerance. The
+JSON parser captures bytes before schema validation; proxies must preserve the body.
+
+Provision the secret in both services, then release the signing payment-service change
+before enabling this verifier. Mixed versions with an unsigned sender fail closed.
+Synchronize service clocks. Callback retries must be signed afresh after expiry.
+Tokens are not single use: a valid token may repeat the same callback within its short
+validity window, while existing payment ID matching, idempotency, and status transition
+rules continue to apply. No merge or deployment is performed by these changes.
+
 ✅ **Authentication**
 
 - JWT tokens with expiration

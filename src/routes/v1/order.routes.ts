@@ -14,6 +14,7 @@ import {
   updateOrderStatus,
 } from '../../controllers/v1/order.controller';
 import { validateBody, validateParams, validateQuery } from '../../middleware/validate.middleware';
+import { verifyPaymentCallback } from '../../middleware/payment-callback.middleware';
 import {
   assignDriverRequestBodySchema,
   cancelOrderRequestBodySchema,
@@ -70,6 +71,7 @@ router.post(
 
 router.post(
   '/:orderId/payment-status',
+  verifyPaymentCallback('payment-status'),
   validateParams(orderIdParamsSchema),
   validateBody(updatePaymentStatusRequestBodySchema),
   updatePaymentStatus
